@@ -1,0 +1,56 @@
+{
+  "id": "P6",
+  "name": "Westview Learning Center (fictional)",
+  "occupancy": "E",
+  "group_letter": "E",
+  "sprinklered": true,
+  "stories": 2,
+  "spaces": [
+    {
+      "name": "Classrooms (both floors)",
+      "use": "classroom",
+      "area_sf": 6000
+    }
+  ],
+  "upper_floor_occupant_load": 150,
+  "stair_width_in": 44,
+  "exits": [
+    {
+      "id": "D1",
+      "door_clear_width_in": 72
+    },
+    {
+      "id": "D2",
+      "door_clear_width_in": 72
+    }
+  ],
+  "overall_diagonal_ft": 180,
+  "exit_separation_ft": 90,
+  "max_travel_distance_ft": 240,
+  "corridors": [
+    {
+      "name": "classroom corridor",
+      "width_in": 72,
+      "occupant_load_served": 300
+    }
+  ],
+  "documented": {
+    "occupant_load_on_plans": true,
+    "exit_signs_shown": true
+  },
+  "accessibility": {
+    "accessible_route_from_parking": true,
+    "accessible_restroom": true
+  },
+  "sheets": {
+    "code_analysis": "G-001",
+    "egress": "A-101",
+    "door_schedule": "A-601"
+  },
+  "expected_findings": [
+    {
+      "id": "STAIR-WIDTH",
+      "section": "1005.3.1"
+    }
+  ]
+}

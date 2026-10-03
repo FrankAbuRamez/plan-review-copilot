@@ -1,0 +1,67 @@
+{
+  "id": "P5",
+  "name": "Corner Market (fictional)",
+  "occupancy": "M",
+  "group_letter": "M",
+  "sprinklered": false,
+  "stories": 1,
+  "spaces": [
+    {
+      "name": "Sales floor",
+      "use": "mercantile",
+      "area_sf": 8000
+    },
+    {
+      "name": "Stockroom",
+      "use": "storage",
+      "area_sf": 1200
+    }
+  ],
+  "exits": [
+    {
+      "id": "D1",
+      "door_clear_width_in": 36
+    },
+    {
+      "id": "D2",
+      "door_clear_width_in": 36
+    }
+  ],
+  "overall_diagonal_ft": 130,
+  "exit_separation_ft": 70,
+  "max_travel_distance_ft": 190,
+  "corridors": [
+    {
+      "name": "stock corridor",
+      "width_in": 40,
+      "occupant_load_served": 60
+    }
+  ],
+  "documented": {
+    "occupant_load_on_plans": false,
+    "exit_signs_shown": true
+  },
+  "accessibility": {
+    "accessible_route_from_parking": false,
+    "accessible_restroom": true
+  },
+  "sheets": {
+    "code_analysis": "G-001",
+    "egress": "A-101",
+    "door_schedule": "A-601"
+  },
+  "expected_findings": [
+    {
+      "id": "CORRIDOR",
+      "section": "1020.3"
+    },
+    {
+      "id": "OL-DOC",
+      "section": "107.2.3"
+    },
+    {
+      "id": "ACCESSIBLE-ROUTE",
+      "section": "1104.1"
+    }
+  ]
+}

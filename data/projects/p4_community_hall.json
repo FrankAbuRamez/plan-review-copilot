@@ -1,0 +1,61 @@
+{
+  "id": "P4",
+  "name": "Riverside Community Hall (fictional)",
+  "occupancy": "A-3",
+  "group_letter": "A",
+  "sprinklered": true,
+  "stories": 1,
+  "spaces": [
+    {
+      "name": "Hall (chairs only)",
+      "use": "assembly_concentrated",
+      "area_sf": 4200
+    }
+  ],
+  "exits": [
+    {
+      "id": "D1",
+      "door_clear_width_in": 48
+    },
+    {
+      "id": "D2",
+      "door_clear_width_in": 48
+    }
+  ],
+  "overall_diagonal_ft": 150,
+  "exit_separation_ft": 70,
+  "max_travel_distance_ft": 180,
+  "corridors": [],
+  "documented": {
+    "occupant_load_on_plans": true,
+    "occupant_load_posting": false,
+    "exit_signs_shown": false
+  },
+  "accessibility": {
+    "accessible_route_from_parking": true,
+    "accessible_restroom": true
+  },
+  "sheets": {
+    "code_analysis": "G-001",
+    "egress": "A-101",
+    "door_schedule": "A-601"
+  },
+  "expected_findings": [
+    {
+      "id": "EXITS-COUNT",
+      "section": "1006.3.3"
+    },
+    {
+      "id": "EGRESS-WIDTH",
+      "section": "1005.3.2"
+    },
+    {
+      "id": "POSTING",
+      "section": "1004.3"
+    },
+    {
+      "id": "EXIT-SIGNS",
+      "section": "1013.1"
+    }
+  ]
+}

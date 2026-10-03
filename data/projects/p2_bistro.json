@@ -1,0 +1,78 @@
+{
+  "id": "P2",
+  "name": "Harbor Street Bistro (fictional)",
+  "occupancy": "A-2",
+  "group_letter": "A",
+  "sprinklered": false,
+  "stories": 1,
+  "at_level_of_exit_discharge": true,
+  "spaces": [
+    {
+      "name": "Dining",
+      "use": "assembly_unconcentrated",
+      "area_sf": 1800
+    },
+    {
+      "name": "Kitchen",
+      "use": "commercial_kitchen",
+      "area_sf": 900
+    }
+  ],
+  "fire_area_sf": 3200,
+  "exits": [
+    {
+      "id": "D1",
+      "door_clear_width_in": 36
+    },
+    {
+      "id": "D2",
+      "door_clear_width_in": 30
+    }
+  ],
+  "overall_diagonal_ft": 80,
+  "exit_separation_ft": 30,
+  "max_travel_distance_ft": 110,
+  "corridors": [
+    {
+      "name": "rear service corridor",
+      "width_in": 44,
+      "occupant_load_served": 5
+    }
+  ],
+  "documented": {
+    "occupant_load_on_plans": true,
+    "occupant_load_posting": false,
+    "exit_signs_shown": true
+  },
+  "accessibility": {
+    "accessible_route_from_parking": true,
+    "accessible_restroom": false
+  },
+  "sheets": {
+    "code_analysis": "G-001",
+    "egress": "A-101",
+    "door_schedule": "A-601"
+  },
+  "expected_findings": [
+    {
+      "id": "DOOR-WIDTH",
+      "section": "1010.1.1"
+    },
+    {
+      "id": "EXIT-SEP",
+      "section": "1007.1.1"
+    },
+    {
+      "id": "SPRINKLER-A2",
+      "section": "903.2.1.2"
+    },
+    {
+      "id": "POSTING",
+      "section": "1004.3"
+    },
+    {
+      "id": "ACCESSIBLE-RESTROOM",
+      "section": "1109.2"
+    }
+  ]
+}

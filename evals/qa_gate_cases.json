@@ -1,0 +1,20 @@
+{
+  "should_reject": [
+    {"label": "no citation", "check_id": "DOOR-WIDTH", "severity": "Major", "sheet": "A-601", "section": "", "comment": "Revise door D2 to provide a minimum 32 in. clear opening width.", "evidence": "D2=30 in."},
+    {"label": "invented section", "check_id": "EXIT-SEP", "severity": "Critical", "sheet": "A-101", "section": "IBC 2021 §1007.9.4", "comment": "Revise exit locations to meet the required separation distance.", "evidence": "30 ft shown; 40 ft required."},
+    {"label": "names a product", "check_id": "DOOR-WIDTH", "severity": "Major", "sheet": "A-601", "section": "IBC 2021 §1010.1.1", "comment": "Provide a Von Duprin exit device on door D2 with a 32 in. clear opening.", "evidence": "D2=30 in."},
+    {"label": "model number", "check_id": "SPRINKLER-A2", "severity": "Critical", "sheet": "G-001", "section": "IBC 2021 §903.2.1.2", "comment": "Provide sprinkler heads Model QR-155 throughout the dining room fire area.", "evidence": "occupant load 125"},
+    {"label": "hedging", "check_id": "TRAVEL", "severity": "Critical", "sheet": "A-101", "section": "IBC 2021 §1017.2", "comment": "Revise layout since travel distance might possibly exceed the limit in some areas.", "evidence": "320 ft vs 300 ft"},
+    {"label": "not actionable", "check_id": "CORRIDOR", "severity": "Major", "sheet": "A-101", "section": "IBC 2021 §1020.3", "comment": "The stock corridor appears to be narrower than what the code requires for this load.", "evidence": "40 in. serving 60"},
+    {"label": "no numbers on quantitative item", "check_id": "EGRESS-WIDTH", "severity": "Critical", "sheet": "A-101", "section": "IBC 2021 §1005.3.2", "comment": "Revise exit doors to provide the required total egress width for the hall.", "evidence": "insufficient width"},
+    {"label": "bad severity", "check_id": "POSTING", "severity": "Urgent", "sheet": "A-101", "section": "IBC 2021 §1004.3", "comment": "Provide a note and location for the posted maximum occupant load sign.", "evidence": ""},
+    {"label": "missing sheet", "check_id": "EXIT-SIGNS", "severity": "Major", "sheet": "", "section": "IBC 2021 §1013.1", "comment": "Provide exit sign locations on the egress plan.", "evidence": "2 exits required"},
+    {"label": "too short", "check_id": "OL-DOC", "severity": "Major", "sheet": "G-001", "section": "IBC 2021 §107.2.3", "comment": "Provide occupant load.", "evidence": ""}
+  ],
+  "should_accept": [
+    {"label": "door width", "check_id": "DOOR-WIDTH", "severity": "Major", "sheet": "A-601", "section": "IBC 2021 §1010.1.1", "comment": "Revise door D2 to provide a minimum 32 in. clear opening width.", "evidence": "D2=30 in."},
+    {"label": "travel distance", "check_id": "TRAVEL", "severity": "Critical", "sheet": "A-101", "section": "IBC 2021 §1017.2", "comment": "Revise the layout or add an exit so exit access travel distance does not exceed 300 ft.", "evidence": "Longest path 320 ft; limit 300 ft (sprinklered)."},
+    {"label": "accessible restroom", "check_id": "ACCESSIBLE-RESTROOM", "severity": "Major", "sheet": "A-401", "section": "IBC 2021 §1109.2", "comment": "Provide an accessible toilet room, or clarify how the provided restroom meets accessibility requirements.", "evidence": "Restroom shown is not identified as accessible."},
+    {"label": "occupant load documentation", "check_id": "OL-DOC", "severity": "Major", "sheet": "G-001", "section": "IBC 2021 §107.2.3", "comment": "Provide an occupant load calculation for each room and space on the code analysis sheet.", "evidence": "None shown."}
+  ]
+}
