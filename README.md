@@ -2,7 +2,7 @@
 
 A three-stage pipeline that drafts building-plan correction comments, audits them the way a senior plans examiner would, and blocks weak comments before they reach an applicant. An evaluation harness scores it against an answer key.
 
-Built by **Alaa Atassi**, an ICC-certified commercial plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
+Built by an ICC-certified commercial plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
 
 > All projects in this repo are **fictional and synthetic**. No client, employer or jurisdiction data is used. Code sections are cited by number with paraphrased summaries; verify against the adopted code and local amendments.
 
