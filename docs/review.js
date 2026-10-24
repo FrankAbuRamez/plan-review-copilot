@@ -108,6 +108,46 @@ function exampleCitation(code) {
   return `${code.split("(")[0].trim()} §1005.3.2`;
 }
 
+// ---------- high detail: zoomed tiles of the densest sheets ----------
+const MAX_TILES = 80;
+async function detailTiles(pdfFiles, budgetBytes, note) {
+  const lib = await loadPdfJs();
+  const pages = [];
+  for (const f of pdfFiles) {
+    const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const words = (await page.getTextContent()).items.length;
+      pages.push({ f, n, page, words });
+    }
+  }
+  // Densest sheets first: schedules, general notes and energy forms carry the small text.
+  const pick = pages.sort((a, b) => b.words - a.words).slice(0, Math.floor(MAX_TILES / 4));
+  const blocks = [];
+  let used = 0;
+  for (const [k, p] of pick.entries()) {
+    note(`preparing zoomed tiles ${k + 1}/${pick.length}`);
+    const v1 = p.page.getViewport({ scale: 1 });
+    const vp = p.page.getViewport({ scale: 2600 / Math.max(v1.width, v1.height) });
+    const c = document.createElement("canvas");
+    c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    await p.page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+    const names = ["top-left", "top-right", "bottom-left", "bottom-right"];
+    for (let t = 0; t < 4; t++) {
+      const w = Math.ceil(c.width / 2), h = Math.ceil(c.height / 2);
+      const tile = document.createElement("canvas");
+      tile.width = w; tile.height = h;
+      tile.getContext("2d").drawImage(c, (t % 2) * w, Math.floor(t / 2) * h, w, h, 0, 0, w, h);
+      const data = tile.toDataURL("image/jpeg", 0.72).split(",")[1];
+      if (used + data.length > budgetBytes) return blocks;
+      used += data.length;
+      blocks.push({ type: "text", text: `Zoomed tile, ${p.f.name} page ${p.n}, ${names[t]} quarter` });
+      blocks.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } });
+    }
+  }
+  return blocks;
+}
+
 // ---------- run ----------
 function stage(id, n, live = true) { $("#" + id).classList.toggle("live", live); if (n !== undefined) $("#" + id + "n").textContent = n; }
 function showErr(msg) { $("#err").hidden = !msg; $("#err").textContent = msg || ""; }
@@ -157,6 +197,7 @@ async function generate() {
     const n = (progress.text.match(/"(comment|follow_up)"\s*:/g) || []).length;
     const label = progress.phase === "upload" ? `sending ${files.length} file(s)`
       : progress.phase === "final" ? "final check"
+      : progress.phase === "tiles" ? (progress.tilesNote || "preparing zoomed tiles")
       : progress.phase === "thinking" ? "reading the sheets and checking the code"
       : `writing comments${n ? ` (${n} so far)` : ""}`;
     $("#s1s").textContent = `${label} · ${secs()}s`;
@@ -170,6 +211,16 @@ async function generate() {
       content.push(/\.pdf$/i.test(f.name)
         ? { type: "document", source: { type: "base64", media_type: "application/pdf", data } }
         : { type: "image", source: { type: "base64", media_type: /\.png$/i.test(f.name) ? "image/png" : "image/jpeg", data } });
+    }
+    if ($("#detail").checked) {
+      const pdfs = files.filter((f) => /\.pdf$/i.test(f.name));
+      const budget = LIMIT - encoded() - 200000;
+      if (pdfs.length && budget > 1e6) {
+        progress.phase = "tiles";
+        const tiles = await detailTiles(pdfs, budget, (m) => { progress.tilesNote = m; });
+        if (tiles.length) content.push({ type: "text", text: "The zoomed tiles below repeat the densest sheets at higher resolution. Use them to read small text; cite the page number of the original sheet." }, ...tiles);
+        progress.phase = "upload";
+      }
     }
     if ($("#final").checked && content.length) content[content.length - 1].cache_control = { type: "ephemeral" };
     const notes = $("#notes").value.trim();

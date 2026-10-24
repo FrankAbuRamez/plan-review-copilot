@@ -17,6 +17,7 @@ Built by an ICC-certified building plans examiner who leads a 20+ engineer plan 
 - **Code checklist.** A required pass over the mandatory items (for a dwelling: fire separation, safety glazing, escape openings, smoke and CO alarms, sprinklers, landings, attic access, address, exhaust), each marked Complies, Not shown, Noncompliant or N/A, so a miss is visible instead of silent.
 - **Every comment shows its sheet, code section, evidence and page.** Click the page chip to open the sheet.
 - **Reviewer workspace.** Edit any comment, take it out of the letter, or move it between the letter and the held list. Add the plan check number, reviewer and jurisdiction.
+- **High detail (optional).** Also sends zoomed tiles of the most text-dense sheets (schedules, notes, energy forms) so small text is readable.
 - **Final check (optional).** A second Claude pass re-checks Critical, held and verify-citation comments against the sheets and confirms, revises or drops each one.
 - **Your standard comments.** Paste your firm or city standard comments once; Claude uses your wording when one fits.
 - **Exports.** Copy, Word, print or PDF, and JSON. The review survives a page refresh.
