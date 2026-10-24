@@ -17,10 +17,13 @@ def review_cmd(argv: list[str]) -> None:
     parser.add_argument("--disciplines", help="comma-separated, default: all")
     parser.add_argument("--notes", default="", help="anything the reviewer should know (scope, jurisdiction)")
     parser.add_argument("--model", default="claude-sonnet-5-5", help="claude-sonnet-5-5 (default, lower cost) or claude-opus-5-5")
+    parser.add_argument("--standard-plan", action="store_true",
+                        help="pre-approved plan set: review site-specific items and deviations only")
     parser.add_argument("--out", help="write the letter to this Markdown file")
     args = parser.parse_args(argv)
     disciplines = [d.strip() for d in args.disciplines.split(",")] if args.disciplines else None
-    raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes, args.model)
+    raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes, args.model,
+                                                              "standard" if args.standard_plan else "full")
     letter = doc_reviewer.render(raw, accepted, rejected, args.code)
     if args.out:
         Path(args.out).write_text(letter, encoding="utf-8")

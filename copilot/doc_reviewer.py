@@ -20,6 +20,7 @@ MODEL = "claude-sonnet-5-5"  # lower cost; pass --model claude-opus-5-5 for a de
 HERE = Path(__file__).resolve().parent
 PROMPT = (HERE / "doc_review_prompt.md").read_text(encoding="utf-8")
 SCHEMA = json.loads((HERE / "doc_review_schema.json").read_text(encoding="utf-8"))
+REVIEW_TYPES = json.loads((HERE / "review_types.json").read_text(encoding="utf-8"))
 DISCIPLINES = ["Building", "Fire and Life Safety", "Accessibility", "Structural",
                "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"]
 MEDIA = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
@@ -37,8 +38,9 @@ def example_citation(code_basis: str) -> str:
     return f"{code_basis.split('(')[0].strip()} §1005.3.2"
 
 
-def system_prompt(code_basis: str, disciplines: list[str]) -> str:
+def system_prompt(code_basis: str, disciplines: list[str], review_type: str = "full") -> str:
     return (PROMPT.replace("{code_basis}", code_basis)
+            .replace("{review_type}", REVIEW_TYPES.get(review_type, REVIEW_TYPES["full"]))
             .replace("{disciplines}", ", ".join(disciplines))
             .replace("{example_citation}", example_citation(code_basis)))
 
@@ -60,7 +62,8 @@ def document_blocks(paths: list[str]) -> list[dict]:
     return blocks
 
 
-def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL) -> dict:
+def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL,
+          review_type: str = "full") -> dict:
     """Send the documents to Claude and return the parsed JSON review."""
     import anthropic
 
@@ -72,7 +75,7 @@ def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str 
         max_tokens=64000,
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
-        system=system_prompt(code_basis, disciplines),
+        system=system_prompt(code_basis, disciplines, review_type),
         output_config={"effort": "high", "format": {"type": "json_schema", "schema": SCHEMA}},
         messages=[{"role": "user", "content": content}],
     ) as stream:
@@ -94,8 +97,9 @@ def to_findings(review: dict) -> list[Finding]:
     return findings
 
 
-def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = "", model: str = MODEL):
-    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model)
+def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = "",
+                     model: str = MODEL, review_type: str = "full"):
+    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model, review_type)
     audited, log = senior_audit.audit(to_findings(raw), strict=False)
     accepted, rejected = qa_gate.gate(audited, strict=False)
     return raw, accepted, rejected, log
@@ -114,6 +118,9 @@ def render(raw: dict, accepted: list[Finding], rejected, code_basis: str) -> str
     if rejected:
         lines += ["---", "", "## Held for human review (failed QA gate)", ""]
         lines += [f"- {f.comment} ({'; '.join(problems)})" for f, problems in rejected]
+    if raw.get("checklist"):
+        lines += ["", "## Code checklist", ""]
+        lines += [f"- {c['status']}: {c['item']} ({c['code']}, sheet {c['sheet']}) {c['note']}" for c in raw["checklist"]]
     if raw.get("not_reviewed"):
         lines += ["", "## Not reviewed", ""] + [f"- {x}" for x in raw["not_reviewed"]]
     lines += ["", "_Draft for a certified plans examiner to verify before sending._"]

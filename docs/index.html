@@ -110,6 +110,8 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .log{font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0;padding:0;list-style:none}
 .log li{padding:6px 8px;border-radius:6px}
 .log li:nth-child(odd){background:var(--soft)}
+.held{list-style:none;margin:0;padding:0}
+.nr{margin:0;padding-left:18px}
 .held li{border-left:3px solid var(--held);background:var(--held-soft);padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:13px}
 .empty{color:var(--muted);font-size:13px}
 .disclaim{font-size:12px;color:var(--muted);margin-top:14px}
@@ -139,6 +141,19 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .proj b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .nr li{font-size:13px;margin-bottom:4px}
 .verify{background:transparent;color:var(--muted);border:1px dashed var(--line)}
+.pg{cursor:pointer;background:var(--brand-soft);color:var(--brand);border:0}
+.ck{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ck li{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:13px;align-items:start}
+.ck .st{font-size:11px;font-weight:800;border-radius:6px;padding:2px 6px;text-align:center}
+.st.Complies{background:var(--ok-soft);color:var(--ok)}.st.NA{background:var(--soft);color:var(--muted)}
+.st.Notshown{background:var(--major-soft);color:var(--major)}.st.Noncompliant{background:var(--crit-soft);color:var(--crit)}
+.ck small{display:block;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:grid;place-items:center;padding:16px}
+.modal-in{background:var(--panel);border-radius:14px;max-width:min(1400px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.modal-h button{border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
+.modal-b{overflow:auto;padding:10px}.modal-b canvas{max-width:100%;height:auto;display:block}
+@media print{.ck,.modal{display:none!important}}
 .sum{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
 .sum span{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
 .lhd{font-size:12px;color:var(--muted);margin-top:2px}
@@ -243,6 +258,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
           </select>
         </label>
         <input id="code-other" placeholder="e.g. 2024 IBC with City of Austin amendments" hidden>
+        <label>Review type<select id="rtype"><option value="full">Full plan review</option><option value="standard">Pre-approved / standard plan (site-specific items and deviations only)</option></select></label>
         <div class="disc" id="disc"></div>
         <label>Notes for the reviewer (optional)<textarea id="notes" placeholder="Scope, jurisdiction, anything to focus on"></textarea></label>
       </div>
@@ -275,6 +291,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
         <button id="copy">Copy letter</button><button id="word">Download Word</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button><button id="clear">Clear review</button>
         <label class="inline" style="width:100%;margin-top:6px"><input type="checkbox" id="group" checked> Group comments by discipline</label>
       </div></div>
+      <div class="panel"><div class="ph">Code checklist <small id="cksum"></small></div><div class="pb"><ul class="ck" id="ck"></ul></div></div>
       <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held"></ul></div></div>
       <div class="panel"><div class="ph">Not reviewed</div><div class="pb"><ul class="nr" id="nr"></ul></div></div>
       <div class="panel"><div class="ph">Senior audit log</div><div class="pb"><ul class="log" id="log"></ul></div></div>
@@ -322,9 +339,10 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   </div>
 </section>
 </main>
+<div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792853913"></script>
-<script src="engine.js?v=1792853913"></script>
+<script src="data.js?v=1792854213"></script>
+<script src="engine.js?v=1792854213"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -379,6 +397,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792853913"></script>
+<script type="module" src="review.js?v=1792854213"></script>
 </body>
 </html>

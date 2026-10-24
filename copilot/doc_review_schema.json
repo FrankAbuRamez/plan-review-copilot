@@ -3,6 +3,7 @@
   "additionalProperties": false,
   "required": [
     "project",
+    "checklist",
     "comments",
     "not_reviewed"
   ],
@@ -63,7 +64,9 @@
           "sheet",
           "section",
           "comment",
-          "basis"
+          "basis",
+          "file",
+          "page"
         ],
         "properties": {
           "discipline": {
@@ -101,6 +104,12 @@
           },
           "basis": {
             "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
           }
         }
       }
@@ -109,6 +118,43 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item",
+          "code",
+          "status",
+          "sheet",
+          "note"
+        ],
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Complies",
+              "Not shown",
+              "Noncompliant",
+              "N/A"
+            ]
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
       }
     }
   }

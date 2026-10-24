@@ -244,7 +244,8 @@
 
     function runDocs(raw) {
       const drafts = (raw.comments || []).map((c, i) => ({ check_id: "C" + String(i + 1).padStart(2, "0"), discipline: c.discipline,
-        severity: c.severity, sheet: c.sheet, section: c.section, comment: c.comment, evidence: c.basis, source: "claude", notes: [] }));
+        severity: c.severity, sheet: c.sheet, section: c.section, comment: c.comment, evidence: c.basis, source: "claude", notes: [],
+        file: c.file || "", page: c.page || 0 }));
       const draftsSnapshot = JSON.parse(JSON.stringify(drafts));
       const { audited, log } = audit(drafts, false);
       const { accepted, rejected } = gate(audited, false);

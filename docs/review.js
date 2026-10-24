@@ -104,7 +104,9 @@ async function generate() {
   if (!disciplines.length) { showErr("Pick at least one discipline."); return; }
   const modelKey = MODELS[$("#model").value] ? $("#model").value : "sonnet";
   const model = MODELS[modelKey];
+  const rtype = D.reviewTypes[$("#rtype").value] ? $("#rtype").value : "full";
   const system = D.docPrompt.replaceAll("{code_basis}", code).replaceAll("{disciplines}", disciplines.join(", "))
+    .replaceAll("{review_type}", D.reviewTypes[rtype])
     .replaceAll("{example_citation}", exampleCitation(code));
 
   running = true; refresh();
@@ -200,7 +202,8 @@ function render() {
     return `${head}<div class="cm ${f.include ? "" : "off"}" data-i="${idx}"><div class="i">${num}</div><div>
       <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>
       <span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span>
-      ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Outside the built-in verified library; confirm the section">verify citation</span>' : ""}</div>
+      ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Outside the built-in verified library; confirm the section">verify citation</span>' : ""}
+      ${f.page > 0 ? `<button class="chip pg" data-pg="${idx}" title="Open the page">📄 p.${f.page}</button>` : ""}</div>
       <div class="t" data-edit="${idx}">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div>
       <div class="tools"><label><input type="checkbox" data-inc="${idx}" ${f.include ? "checked" : ""}> In letter</label>
         <button data-ed="${idx}">Edit</button><button data-hold="${idx}">Move to held</button></div></div></div>`;
@@ -227,6 +230,13 @@ function render() {
     return `<li><b>${esc(f.sheet)}</b> ${esc(f.comment)}<br><small>${esc(f.problems.join("; ") || "moved here by the reviewer")}</small>
       <div class="tools"><button data-back="${idx}">Move to letter</button></div></li>`;
   }).join("") : '<li class="empty" style="border:0;background:none">Nothing held.</li>';
+  const ck = state.raw.checklist || [];
+  const cnt = (s) => ck.filter((c) => c.status === s).length;
+  $("#cksum").textContent = ck.length ? `${cnt("Complies")} ok · ${cnt("Not shown")} not shown · ${cnt("Noncompliant")} noncompliant` : "";
+  const rank = { Noncompliant: 0, "Not shown": 1, Complies: 2, "N/A": 3 };
+  $("#ck").innerHTML = ck.length ? [...ck].sort((a, b) => rank[a.status] - rank[b.status]).map((c) =>
+    `<li><span class="st ${c.status.replace(/[^A-Za-z]/g, "")}">${esc(c.status)}</span><div><b>${esc(c.item)}</b> · ${esc(c.code)} · ${esc(c.sheet)}<small>${esc(c.note)}</small></div></li>`).join("")
+    : '<li class="empty">No checklist returned.</li>';
   const nr = (state.raw.not_reviewed || []).filter((x) => /[A-Za-z]{3}/.test(x));
   $("#nr").innerHTML = nr.length ? nr.map((x) => `<li>${esc(x)}</li>`).join("") : '<li class="empty">Nothing flagged.</li>';
   $("#log").innerHTML = state.log?.length ? state.log.map((l) => `<li>${esc(l)}</li>`).join("") : '<li class="empty">No changes needed.</li>';
@@ -236,6 +246,7 @@ function render() {
 }
 
 function wire() {
+  document.querySelectorAll("[data-pg]").forEach((b) => (b.onclick = () => showPage(state.items[+b.dataset.pg])));
   document.querySelectorAll("[data-inc]").forEach((c) => (c.onchange = () => { state.items[+c.dataset.inc].include = c.checked; save(); render(); }));
   document.querySelectorAll("[data-hold]").forEach((b) => (b.onclick = () => { Object.assign(state.items[+b.dataset.hold], { status: "held", include: false }); save(); render(); }));
   document.querySelectorAll("[data-back]").forEach((b) => (b.onclick = () => { Object.assign(state.items[+b.dataset.back], { status: "letter", include: true }); save(); render(); }));
@@ -247,6 +258,45 @@ function wire() {
   }));
 }
 $("#group").onchange = render;
+
+// ---------- page viewer ----------
+let pdfjs = null;
+async function loadPdfJs() {
+  if (pdfjs) return pdfjs;
+  await new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  return (pdfjs = window.pdfjsLib);
+}
+const docCache = new Map();
+async function showPage(f) {
+  $("#modal").hidden = false;
+  $("#modal-t").textContent = `${f.file || ""} · page ${f.page} · Sheet ${f.sheet}`;
+  const file = files.find((x) => x.name === f.file) || (files.length === 1 ? files[0] : null);
+  if (!file || !/\.pdf$/i.test(file.name)) {
+    $("#modal-b").innerHTML = `<p style="padding:20px">Add <b>${esc(f.file || "the plan file")}</b> again in step 1 to view this page.</p>`;
+    return;
+  }
+  $("#modal-b").innerHTML = '<p style="padding:20px">Loading page…</p>';
+  try {
+    const lib = await loadPdfJs();
+    if (!docCache.has(file)) docCache.set(file, lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise);
+    const doc = await docCache.get(file);
+    const page = await doc.getPage(Math.min(Math.max(1, f.page), doc.numPages));
+    const v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: Math.min(2.5, 2400 / v1.width) });
+    const c = document.createElement("canvas");
+    c.width = vp.width; c.height = vp.height;
+    await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+    $("#modal-b").innerHTML = ""; $("#modal-b").appendChild(c);
+  } catch (e) { $("#modal-b").innerHTML = `<p style="padding:20px">Could not open the page: ${esc(e.message || e)}</p>`; }
+}
+$("#modal-x").onclick = () => { $("#modal").hidden = true; };
+$("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").hidden = true; });
 
 // ---------- export ----------
 function plainLetter() {
