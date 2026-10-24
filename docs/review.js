@@ -14,6 +14,15 @@ const LIMIT = 32 * 1024 * 1024 * 0.95; // request limit, measured after base64 e
 const DISC = ["Building", "Fire and Life Safety", "Accessibility", "Structural", "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"];
 const DISC_ORDER = ["General", "Building", "Fire and Life Safety", "Accessibility", "Structural", "Site and Civil", "Mechanical", "Plumbing", "Electrical", "Energy", "Green Building"];
 const SEV = ["Critical", "Major", "Minor"];
+const FINAL_SCHEMA = { type: "object", additionalProperties: false, required: ["verdicts"], properties: { verdicts: { type: "array", items: {
+  type: "object", additionalProperties: false, required: ["id", "verdict", "severity", "section", "comment", "reason"],
+  properties: { id: { type: "string" }, verdict: { type: "string", enum: ["Confirmed", "Revise", "Drop"] },
+    severity: { type: "string", enum: ["Critical", "Major", "Minor"] }, section: { type: "string" }, comment: { type: "string" }, reason: { type: "string" } } } } } };
+const FINAL_TASK = `Final check. You drafted the comments below from these documents. Re-check each one against the sheets and the code basis as a senior plans examiner would:
+- Confirmed: the issue is real, shown on the cited sheet, and the citation is the right section of the right code.
+- Revise: the issue is real but the citation, severity, or wording needs fixing. Return the corrected section ("<code> §<number>"), severity, and comment (40-400 characters, starting with an action, no straight double quotes).
+- Drop: the documents do not support it, or it is not a code requirement.
+Use Critical only for a deficiency the documents show that affects life safety or structural adequacy. Missing information is Major. Give a one-sentence reason for each verdict. Return every id.`;
 let files = [];
 let running = false;
 let mode = "new"; // "new" or "recheck"
@@ -104,7 +113,7 @@ window.addEventListener("beforeunload", (e) => { if (running) { e.preventDefault
 
 async function streamReview(client, params, progress) {
   const attach = (s) => {
-    s.on("streamEvent", (ev) => { if (ev.type === "content_block_start") progress.phase = ev.content_block.type; });
+    s.on("streamEvent", (ev) => { if (ev.type === "content_block_start" && !progress.locked) progress.phase = ev.content_block.type; });
     s.on("text", (d) => { progress.text += d; });
     return s.finalMessage();
   };
@@ -144,6 +153,7 @@ async function generate() {
   const tick = setInterval(() => {
     const n = (progress.text.match(/"(comment|follow_up)"\s*:/g) || []).length;
     const label = progress.phase === "upload" ? `sending ${files.length} file(s)`
+      : progress.phase === "final" ? "final check"
       : progress.phase === "thinking" ? "reading the sheets and checking the code"
       : `writing comments${n ? ` (${n} so far)` : ""}`;
     $("#s1s").textContent = `${label} · ${secs()}s`;
@@ -158,6 +168,7 @@ async function generate() {
         ? { type: "document", source: { type: "base64", media_type: "application/pdf", data } }
         : { type: "image", source: { type: "base64", media_type: /\.png$/i.test(f.name) ? "image/png" : "image/jpeg", data } });
     }
+    if ($("#final").checked && content.length) content[content.length - 1].cache_control = { type: "ephemeral" };
     const notes = $("#notes").value.trim();
     const lib = $("#lib").value.split(/\n/).map((l) => l.trim()).filter((l) => l.length > 15).slice(0, 400);
     if (lib.length) content.push({ type: "text", text: "The reviewer's standard comments are below. When one fits an issue you found, use its wording, adjusted to the project. Do not add a comment just because it is in this list.\n" + lib.map((l) => "- " + l).join("\n") });
@@ -177,7 +188,39 @@ async function generate() {
     const inTok = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
     const usage = { inTok, outTok: u.output_tokens || 0, cost: (inTok * model.inPerM + (u.output_tokens || 0) * model.outPerM) / 1e6, secs: secs() };
 
-    const r = E.runDocs(raw);
+    let r = E.runDocs(raw);
+    if ($("#final").checked && !recheck) {
+      const pick = r.accepted.filter((f) => f.severity === "Critical" || f.notes.includes("VERIFY_CITATION"))
+        .concat(r.rejected.map((x) => x.finding));
+      if (pick.length) {
+        progress.phase = "final"; progress.locked = true; progress.text = "";
+        $("#s1s").textContent = `final check on ${pick.length} comments · ${secs()}s`;
+        const list = pick.map((f) => ({ id: f.check_id, sheet: f.sheet, section: f.section, severity: f.severity, comment: f.comment, basis: f.evidence }));
+        const fin = await streamReview(client, {
+          model: model.id, max_tokens: 32000, system,
+          output_config: { effort: model.effort, format: { type: "json_schema", schema: FINAL_SCHEMA } },
+          messages: [{ role: "user", content: content.concat([{ type: "text", text: FINAL_TASK + "\n\n" + JSON.stringify(list, null, 1) }]) }],
+        }, progress);
+        const fu = fin.usage || {};
+        const fIn = (fu.input_tokens || 0) + (fu.cache_creation_input_tokens || 0);
+        usage.cost += (fIn * model.inPerM + (fu.cache_read_input_tokens || 0) * model.inPerM * 0.1 + (fu.output_tokens || 0) * model.outPerM) / 1e6;
+        usage.inTok += fIn + (fu.cache_read_input_tokens || 0); usage.outTok += fu.output_tokens || 0; usage.secs = secs();
+        if (fin.stop_reason !== "refusal") {
+          const verdicts = JSON.parse(fin.content.filter((b) => b.type === "text").map((b) => b.text).join("")).verdicts || [];
+          const byId = Object.fromEntries(verdicts.map((v) => [v.id, v]));
+          raw.comments = raw.comments.map((c, i) => {
+            const v = byId["C" + String(i + 1).padStart(2, "0")];
+            if (!v) return c;
+            if (v.verdict === "Revise") return { ...c, section: v.section || c.section, severity: v.severity || c.severity, comment: v.comment || c.comment, final: "Revised: " + v.reason };
+            if (v.verdict === "Drop") return { ...c, final: "Dropped: " + v.reason, drop: true };
+            return { ...c, final: "Confirmed: " + v.reason };
+          });
+          r = E.runDocs(raw);
+          const finalById = Object.fromEntries(raw.comments.map((c, i) => ["C" + String(i + 1).padStart(2, "0"), c]));
+          for (const f of r.accepted.concat(r.rejected.map((x) => x.finding))) { const c = finalById[f.check_id]; if (c?.final) { f.final = c.final; f.drop = !!c.drop; } }
+        }
+      }
+    }
     stage("s1", r.drafts.length);
     $("#s1s").textContent = `draft comments · ${usage.secs}s · about $${usage.cost.toFixed(2)}`;
     await pause(350); stage("s2", r.log.length);
@@ -191,8 +234,8 @@ async function generate() {
     state = {
       mode: recheck ? "recheck" : "new", recheck: rc,
       raw, code, modelKey, usage, when: new Date().toISOString(), log: r.log,
-      items: r.accepted.map((f) => ({ ...f, status: "letter", include: true, problems: [] }))
-        .concat(r.rejected.map((x) => ({ ...x.finding, status: "held", include: false, problems: x.problems }))),
+      items: r.accepted.map((f) => f.drop ? { ...f, status: "held", include: false, problems: [f.final] } : { ...f, status: "letter", include: true, problems: [] })
+        .concat(r.rejected.map((x) => ({ ...x.finding, status: "held", include: false, problems: x.finding.final ? [x.finding.final, ...x.problems] : x.problems }))),
     };
     save();
     render();
@@ -237,6 +280,7 @@ function render() {
       <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>
       <span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span>
       ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Not in the section index; confirm the section exists and applies">verify citation</span>' : ""}
+      ${f.final && !f.drop ? `<span class="chip fc" title="${esc(f.final)}">${f.final.startsWith("Revised") ? "✎ revised in final check" : "✓ final check"}</span>` : ""}
       ${f.notes.includes("INDEXED") ? `<span class="chip idx" title="${esc((E.indexLookup(f.section) || ["", ""])[1])}">✓ section</span>` : ""}
       ${f.page > 0 ? `<button class="chip pg" data-pg="${idx}" title="Open the page">📄 p.${f.page}</button>` : ""}</div>
       <div class="t" data-edit="${idx}">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div>

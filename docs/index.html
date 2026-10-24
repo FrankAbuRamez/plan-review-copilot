@@ -156,6 +156,7 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .nr li{font-size:13px;margin-bottom:4px}
 .verify{background:transparent;color:var(--muted);border:1px dashed var(--line)}
 .idx{background:var(--ok-soft);color:var(--ok)}
+.fc{background:var(--brand-soft);color:var(--brand)}
 .pg{cursor:pointer;background:var(--brand-soft);color:var(--brand);border:0}
 .ck{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .ck li{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:13px;align-items:start}
@@ -294,6 +295,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
         <label>Model<select id="model"><option value="sonnet">Claude Sonnet 5.5 · lower cost (default)</option><option value="opus">Claude Opus 5.5 · deeper review, about 2x cost</option></select></label>
         <label>API key<input id="key" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
         <label class="inline"><input type="checkbox" id="remember"> Remember on this computer</label>
+        <label class="inline" title="A second Claude pass re-checks Critical, held and verify-citation comments against the sheets"><input type="checkbox" id="final"> Final check on Critical and flagged comments (about +40% cost)</label>
         <div class="hint">The key stays in this browser and is sent only to Anthropic. Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com/settings/keys</a>.</div>
         <button class="run" id="go" disabled>Generate comments</button>
         <div class="err" id="err" hidden></div>
@@ -365,8 +367,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 </main>
 <div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792855166"></script>
-<script src="engine.js?v=1792855166"></script>
+<script src="data.js?v=1792855234"></script>
+<script src="engine.js?v=1792855234"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -421,6 +423,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792855166"></script>
+<script type="module" src="review.js?v=1792855234"></script>
 </body>
 </html>
