@@ -125,7 +125,7 @@ async function generate() {
     clearInterval(tick);
     stage("s1", "!", false);
     const status = e?.status;
-    showErr(status === 401 ? "That API key was rejected. Check it at console.anthropic.com."
+    showErr(status === 401 ? "That API key was rejected. Check it at platform.claude.com/settings/keys."
       : status === 429 ? "Rate limited by the API. Wait a minute and try again."
       : status === 413 ? "The files are too large for one request. Split the plan set."
       : (e?.message || String(e)));
