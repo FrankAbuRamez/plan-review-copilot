@@ -60,6 +60,9 @@ const libCount = () => { const n = $("#lib").value.split(/\n/).filter((l) => l.t
 $("#lib").value = store.get("prc_lib") || ""; libCount();
 $("#lib").addEventListener("input", () => { store.set("prc_lib", $("#lib").value); libCount(); });
 
+if (store.get("prc_guide") === "hidden") $("#guide").hidden = true;
+$("#guide-x").onclick = () => { $("#guide").hidden = true; store.set("prc_guide", "hidden"); };
+
 // ---------- files ----------
 const mb = (n) => (n / 1048576).toFixed(1) + " MB";
 const encoded = () => files.reduce((t, f) => t + Math.ceil(f.size / 3) * 4, 0);
