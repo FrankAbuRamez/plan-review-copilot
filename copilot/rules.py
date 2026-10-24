@@ -28,8 +28,8 @@ def required_exits(load: int) -> int:
     return 2
 
 
-def _sheet(project: dict, key: str) -> str:
-    return project.get("sheets", {}).get(key, "Code analysis")
+def _sheet(project: dict, key: str, default: str = "Code analysis") -> str:
+    return project.get("sheets", {}).get(key, default)
 
 
 def review(project: dict) -> list[Finding]:
@@ -128,5 +128,17 @@ def review(project: dict) -> list[Finding]:
         add("EXIT-SIGNS", "Major", egress_sheet, "1013.1",
             "Provide exit sign locations on the egress plan.",
             f"{needed} exits required; no exit signs shown.")
+
+    access = project.get("accessibility", {})
+    if access.get("accessible_route_from_parking") is False:
+        add("ACCESSIBLE-ROUTE", "Major", _sheet(project, "site", "Site plan"), "1104.1",
+            "Provide an accessible route from the accessible parking to the accessible building entrance, "
+            "and show it on the site plan.",
+            "No accessible route from parking shown.", discipline="Accessibility")
+    if access.get("accessible_restroom") is False:
+        add("ACCESSIBLE-RESTROOM", "Major", _sheet(project, "restrooms", _sheet(project, "egress")), "1110.2",
+            "Revise the restroom layout so each toilet room provided is accessible, and provide enlarged "
+            "plans with clearances.",
+            "Toilet room provided; no accessible fixtures or clearances shown.", discipline="Accessibility")
 
     return findings

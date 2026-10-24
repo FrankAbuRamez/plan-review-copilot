@@ -14,7 +14,7 @@
   "should_accept": [
     {"label": "door width", "check_id": "DOOR-WIDTH", "severity": "Major", "sheet": "A-601", "section": "IBC 2021 §1010.1.1", "comment": "Revise door D2 to provide a minimum 32 in. clear opening width.", "evidence": "D2=30 in."},
     {"label": "travel distance", "check_id": "TRAVEL", "severity": "Critical", "sheet": "A-101", "section": "IBC 2021 §1017.2", "comment": "Revise the layout or add an exit so exit access travel distance does not exceed 300 ft.", "evidence": "Longest path 320 ft; limit 300 ft (sprinklered)."},
-    {"label": "accessible restroom", "check_id": "ACCESSIBLE-RESTROOM", "severity": "Major", "sheet": "A-401", "section": "IBC 2021 §1109.2", "comment": "Provide an accessible toilet room, or clarify how the provided restroom meets accessibility requirements.", "evidence": "Restroom shown is not identified as accessible."},
+    {"label": "accessible restroom", "check_id": "ACCESSIBLE-RESTROOM", "severity": "Major", "sheet": "A-401", "section": "IBC 2021 §1110.2", "comment": "Provide an accessible toilet room, or clarify how the provided restroom meets accessibility requirements.", "evidence": "Restroom shown is not identified as accessible."},
     {"label": "occupant load documentation", "check_id": "OL-DOC", "severity": "Major", "sheet": "G-001", "section": "IBC 2021 §107.2.3", "comment": "Provide an occupant load calculation for each room and space on the code analysis sheet.", "evidence": "None shown."}
   ]
 }

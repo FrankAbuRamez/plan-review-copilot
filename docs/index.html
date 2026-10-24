@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan Review Copilot</title>
+<meta name="description" content="AI-assisted plan review demo: draft corrections, senior audit, QA gate. Synthetic data.">
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --ink:#151a23; --muted:#667085; --line:#e4e7ec; --soft:#f8f9fb;
+  --brand:#1f4fd1; --brand-soft:#e9effd;
+  --crit:#c4321f; --crit-soft:#fdecea; --major:#b26a00; --major-soft:#fff4e0; --minor:#3b6e8f; --minor-soft:#e8f2f8;
+  --ok:#14804a; --ok-soft:#e6f6ed; --held:#8a3ffc; --held-soft:#f2ebff;
+  --paper:#fffdf8; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1218; --panel:#171b23; --ink:#e9edf3; --muted:#98a2b3; --line:#283040; --soft:#1c212b;
+    --brand:#7ea2ff; --brand-soft:#1d2742;
+    --crit:#ff8a7a; --crit-soft:#3a1d1a; --major:#ffc266; --major-soft:#3a2c14; --minor:#8cc5e6; --minor-soft:#16303d;
+    --ok:#5fd39a; --ok-soft:#143226; --held:#c3a0ff; --held-soft:#2a1f45; --paper:#1b1f27; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1218; --panel:#171b23; --ink:#e9edf3; --muted:#98a2b3; --line:#283040; --soft:#1c212b;
+  --brand:#7ea2ff; --brand-soft:#1d2742;
+  --crit:#ff8a7a; --crit-soft:#3a1d1a; --major:#ffc266; --major-soft:#3a2c14; --minor:#8cc5e6; --minor-soft:#16303d;
+  --ok:#5fd39a; --ok-soft:#143226; --held:#c3a0ff; --held-soft:#2a1f45; --paper:#1b1f27; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top-in{max-width:1320px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff}
+.nav{display:flex;gap:4px;margin-left:8px}
+.nav button{border:0;background:none;padding:8px 12px;border-radius:8px;font-weight:650;color:var(--muted);cursor:pointer}
+.nav button.on{background:var(--brand-soft);color:var(--brand)}
+.spacer{flex:1}
+.badge{font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--soft);border:1px solid var(--line);color:var(--muted)}
+.iconbtn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;cursor:pointer}
+main{max-width:1320px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:16px}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.ph{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;display:flex;align-items:center;gap:8px}
+.ph small{font-weight:500;color:var(--muted)}
+.pb{padding:14px}
+.plist{list-style:none;margin:0;padding:6px}
+.plist li{padding:10px;border-radius:10px;cursor:pointer;display:grid;gap:2px}
+.plist li:hover{background:var(--soft)}
+.plist li.on{background:var(--brand-soft)}
+.plist .nm{font-weight:650}
+.plist .meta{font-size:12px;color:var(--muted)}
+.occ{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;background:var(--soft);border:1px solid var(--line);margin-right:6px}
+
+.sheet{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media (max-width:1100px){.sheet{grid-template-columns:1fr}}
+.plan{position:relative;background:var(--soft);border:1px dashed var(--line);border-radius:12px;min-height:250px;overflow:hidden}
+.plan svg{width:100%;height:100%;display:block}
+.stamp{position:absolute;right:10px;top:10px;font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.fact{background:var(--soft);border-radius:10px;padding:8px 10px}
+.fact .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.fact .v{font-weight:800;font-size:18px}
+.edit{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.edit label{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.edit input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.edit label.tog{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);padding:6px 0}
+.tog input{width:18px;height:18px;accent-color:var(--brand)}
+.hint{font-size:12px;color:var(--muted);margin-top:8px}
+.aimix{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13px;font-weight:650}.aimix input{width:18px;height:18px;accent-color:var(--brand);margin-top:1px}.aimix small{display:block;font-weight:500;color:var(--muted)}
+.run{margin-top:12px;width:100%;border:0;background:var(--brand);color:#fff;font-weight:800;border-radius:10px;padding:12px;cursor:pointer;font-size:15px}
+.run:hover{filter:brightness(1.05)}
+
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+@media (max-width:700px){.stages{grid-template-columns:1fr}}
+.stage{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px;position:relative;opacity:.45;transition:opacity .3s,transform .3s;box-shadow:var(--shadow)}
+.stage.live{opacity:1;transform:translateY(-2px)}
+.stage .n{font-size:12px;font-weight:800;color:var(--brand)}
+.stage h4{margin:2px 0 6px;font-size:16px}
+.stage .big{font-size:30px;font-weight:850}
+.stage .sub{font-size:12px;color:var(--muted)}
+.stage .bar{height:4px;background:var(--line);border-radius:4px;margin-top:10px;overflow:hidden}
+.stage .bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .6s}
+.stage.live .bar i{width:100%}
+
+.out{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+@media (max-width:1100px){.out{grid-template-columns:1fr}}
+.letter{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow)}
+.lh{display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:12px}
+.lh h3{margin:0;font-size:18px}
+.lh .m{font-size:12px;color:var(--muted);text-align:right}
+.cm{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cm:last-child{border-bottom:0}
+.cm .i{font-weight:800;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chip{font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px}
+.Critical{background:var(--crit-soft);color:var(--crit)}
+.Major{background:var(--major-soft);color:var(--major)}
+.Minor{background:var(--minor-soft);color:var(--minor)}
+.plain{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.cm .t{font-weight:600}
+.cm .b{font-size:12.5px;color:var(--muted);margin-top:4px}
+.clean{padding:24px;text-align:center;color:var(--ok);font-weight:700}
+.side{display:grid;gap:16px;align-content:start}
+.log{font:12.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0;padding:0;list-style:none}
+.log li{padding:6px 8px;border-radius:6px}
+.log li:nth-child(odd){background:var(--soft)}
+.held li{border-left:3px solid var(--held);background:var(--held-soft);padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:13px}
+.empty{color:var(--muted);font-size:13px}
+.disclaim{font-size:12px;color:var(--muted);margin-top:14px}
+
+/* gate */
+.gate{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media (max-width:900px){.gate{grid-template-columns:1fr}}
+.form{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.form label{display:grid;gap:4px;font-size:12px;font-weight:650;color:var(--muted)}
+.form input,.form select,.form textarea{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 10px}
+.form textarea{min-height:92px;resize:vertical}
+.ex{display:flex;flex-wrap:wrap;gap:6px}
+.ex button{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:5px 10px;font-size:12px;cursor:pointer}
+.ex button.good{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
+.verdict{border-radius:12px;padding:14px;font-weight:800;font-size:18px;margin-bottom:10px;text-align:center}
+.verdict.pass{background:var(--ok-soft);color:var(--ok)}
+.verdict.fail{background:var(--held-soft);color:var(--held)}
+.rules{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rules li{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--soft)}
+.rules .y{color:var(--ok);font-weight:900}.rules .x{color:var(--crit);font-weight:900}
+.rules small{display:block;color:var(--muted)}
+
+/* results */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media (max-width:700px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.tile .k{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tile .v{font-size:38px;font-weight:850}
+.tile .s{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:800}
+.pill.okk{background:var(--ok-soft);color:var(--ok)}.pill.miss{background:var(--major-soft);color:var(--major)}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+@media (max-width:800px){.how{grid-template-columns:1fr}}
+.how div{background:var(--soft);border-radius:12px;padding:14px;font-size:14px}
+.how b{display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in">
+  <div class="logo"><div class="mark" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+  </div>Plan Review Copilot</div>
+  <nav class="nav" aria-label="Views">
+    <button class="on" data-v="review">Review</button>
+    <button data-v="gate">QA Gate</button>
+    <button data-v="results">Results</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="badge">Synthetic demo data</span>
+  <button class="iconbtn" id="theme" title="Light or dark">◐</button>
+</div></div>
+
+<main>
+<!-- REVIEW -->
+<section class="view on" id="v-review">
+  <div class="layout">
+    <aside class="panel">
+      <div class="ph">Projects <small>8 fictional</small></div>
+      <ul class="plist" id="plist"></ul>
+    </aside>
+
+    <div>
+      <div class="panel">
+        <div class="ph" id="ptitle">Project</div>
+        <div class="pb sheet">
+          <div class="plan" id="plan"></div>
+          <div>
+            <div class="facts" id="facts"></div>
+            <div class="edit" id="edit"></div>
+            <div class="hint">Change any value, then run the review again.</div>
+            <label class="aimix"><input type="checkbox" id="aimix"><span>Mix in AI-drafted comments<small>Recorded examples of typical AI mistakes, to watch the audit and gate catch them</small></span></label>
+            <button class="run" id="run">▶ Run review</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stages">
+        <div class="stage" id="s1"><div class="n">STAGE 1</div><h4>Draft reviewer</h4><div class="big" id="s1n">–</div><div class="sub">draft findings</div><div class="bar"><i></i></div></div>
+        <div class="stage" id="s2"><div class="n">STAGE 2</div><h4>Senior audit</h4><div class="big" id="s2n">–</div><div class="sub">changes: dedupe, citations, severity</div><div class="bar"><i></i></div></div>
+        <div class="stage" id="s3"><div class="n">STAGE 3</div><h4>QA gate</h4><div class="big" id="s3n">–</div><div class="sub" id="s3s">passed / held for a human</div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="out">
+        <div class="letter" id="letter"><div class="empty">Run the review to draft the correction letter.</div></div>
+        <div class="side">
+          <div class="panel"><div class="ph">Senior audit log</div><div class="pb"><ul class="log" id="log"><li class="empty">Nothing yet.</li></ul></div></div>
+          <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held" style="list-style:none;margin:0;padding:0"><li class="empty" style="border:0;background:none">Nothing held.</li></ul></div></div>
+        </div>
+      </div>
+      <div class="disclaim">Draft output for a licensed reviewer to verify. Code sections are cited by number with paraphrased summaries (IBC 2021). All projects are fictional.</div>
+    </div>
+  </div>
+</section>
+
+<!-- QA GATE -->
+<section class="view" id="v-gate">
+  <div class="gate">
+    <div class="panel">
+      <div class="ph">Write a comment <small>the gate checks it as you type</small></div>
+      <div class="pb form">
+        <div class="ex" id="examples"></div>
+        <div class="row">
+          <label>Check<select id="g-check"></select></label>
+          <label>Severity<select id="g-sev"><option>Critical</option><option>Major</option><option>Minor</option><option>Urgent</option></select></label>
+          <label>Sheet<input id="g-sheet" value="A-601"></label>
+        </div>
+        <label>Code citation<input id="g-sec" value="IBC 2021 §1010.1.1"></label>
+        <label>Comment to the applicant<textarea id="g-com">Revise door D2 to provide a minimum 32 in. clear opening width.</textarea></label>
+        <label>Basis (numbers)<input id="g-ev" value="D2=30 in."></label>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph">Gate result</div>
+      <div class="pb"><div class="verdict" id="verdict"></div><ul class="rules" id="rules"></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="view" id="v-results">
+  <div class="tiles" id="tiles"></div>
+  <div class="panel">
+    <div class="ph">Scored against each project's answer key <small>computed live in your browser</small></div>
+    <div class="pb" style="padding-bottom:0;font-size:13px;color:var(--muted)">The accessibility checks were added after an earlier eval missed them, so P1–P6 are a regression check, not a blind test. P7 and P8 were written afterward. The answer keys were written by the author.</div>
+    <div class="pb" style="overflow-x:auto"><table id="table"></table></div>
+  </div>
+  <div class="how">
+    <div><b>1 · Draft</b>A rules engine checks what the data can prove (occupant load, exits, separation, egress width, travel, corridors, A-2 sprinklers, accessibility) and shows its math.</div>
+    <div><b>2 · Senior audit</b>Merges duplicates, flags any citation not in the verified library, raises life-safety items to Critical, caps paperwork items at Major.</div>
+    <div><b>3 · QA gate</b>Blocks comments with no or unverified citation, no sheet, no action verb, hedging, product names, or numbers missing. Blocked comments go to a person, never silently dropped.</div>
+  </div>
+</section>
+</main>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script>
+(function(){
+  const D = window.PRC_DATA, E = PRC.make(D);
+  const $ = (s)=>document.querySelector(s);
+  const esc = (s)=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  let state = JSON.parse(JSON.stringify(D.projects));
+  let cur = 0;
+
+  // ---------- nav + theme ----------
+  document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("on",x===b));
+    document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+b.dataset.v));
+    if(b.dataset.v==="results") renderResults();
+  });
+  $("#theme").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";};
+
+  // ---------- review ----------
+  function renderList(){
+    $("#plist").innerHTML = state.map((p,i)=>`<li class="${i===cur?"on":""}" data-i="${i}">
+      <span class="nm">${esc(p.name.replace(" (fictional)",""))}</span>
+      <span class="meta"><span class="occ">${p.occupancy}</span>${p.sprinklered?"Sprinklered":"Not sprinklered"} · ${p.stories||1} story</span></li>`).join("");
+    document.querySelectorAll("#plist li").forEach(li=>li.onclick=()=>{cur=+li.dataset.i;renderList();renderProject();reset();});
+  }
+
+  function planSVG(p){
+    const ex = p.exits||[]; const w=520,h=260,m=30;
+    const doors = ex.map((e,i)=>{
+      const x = ex.length===1? w/2 : m+40+(i*(w-2*m-80))/(ex.length-1);
+      const narrow = e.door_clear_width_in<32;
+      return `<g><rect x="${x-16}" y="${h-m-4}" width="32" height="8" rx="2" fill="${narrow?"var(--crit)":"var(--ok)"}"/>
+        <text x="${x}" y="${h-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(e.id)} · ${e.door_clear_width_in}"</text></g>`;
+    }).join("");
+    const rooms = p.spaces.map((s,i)=>{
+      const n=p.spaces.length, rw=(w-2*m)/n;
+      return `<g><rect x="${m+i*rw+4}" y="${m+4}" width="${rw-8}" height="${h-2*m-40}" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="${m+i*rw+rw/2}" y="${m+30}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">${esc(s.name)}</text>
+        <text x="${m+i*rw+rw/2}" y="${m+48}" text-anchor="middle" font-size="11" fill="var(--muted)">${s.area_sf.toLocaleString()} sf · ${esc(s.use.replace(/_/g," "))}</text></g>`;
+    }).join("");
+    const travel = p.max_travel_distance_ft ? `<path d="M ${w-m-30} ${m+70} C ${w/2} ${m+90}, ${w/2} ${h-m-50}, ${m+60} ${h-m-10}" stroke="var(--brand)" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+      <text x="${w/2}" y="${h-m-52}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--brand)">longest travel ${p.max_travel_distance_ft} ft</text>` : "";
+    return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Simplified floor plan">
+      <rect x="${m}" y="${m}" width="${w-2*m}" height="${h-2*m}" rx="10" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+      ${rooms}${travel}${doors}</svg><div class="stamp">${esc(p.sheets?.egress||"A-101")} · simplified</div>`;
+  }
+
+  function renderProject(){
+    const p = state[cur];
+    $("#ptitle").innerHTML = `${esc(p.name)} <small>${p.occupancy} · ${p.spaces.reduce((t,s)=>t+s.area_sf,0).toLocaleString()} sf</small>`;
+    $("#plan").innerHTML = planSVG(p);
+    const load = E.occupantLoad(p);
+    $("#facts").innerHTML = [
+      ["Occupant load", load], ["Exits", (p.exits||[]).length], ["Travel", (p.max_travel_distance_ft||"–")+" ft"]
+    ].map(([k,v])=>`<div class="fact"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+    const doors = (p.exits||[]).map((e,i)=>`<label>Door ${esc(e.id)} clear width (in.)<input type="number" data-door="${i}" value="${e.door_clear_width_in}"></label>`).join("");
+    const acc = p.accessibility||{};
+    $("#edit").innerHTML = `
+      <label class="tog"><input type="checkbox" id="e-spr" ${p.sprinklered?"checked":""}> Sprinklered</label>
+      <label class="tog"><input type="checkbox" id="e-signs" ${(p.documented||{}).exit_signs_shown!==false?"checked":""}> Exit signs shown</label>
+      <label class="tog"><input type="checkbox" id="e-route" ${acc.accessible_route_from_parking!==false?"checked":""}> Accessible route</label>
+      <label class="tog"><input type="checkbox" id="e-wc" ${acc.accessible_restroom!==false?"checked":""}> Accessible restroom</label>
+      ${doors}
+      <label>Exit separation (ft)<input type="number" id="e-sep" value="${p.exit_separation_ft||0}"></label>
+      <label>Longest travel (ft)<input type="number" id="e-trav" value="${p.max_travel_distance_ft||0}"></label>`;
+    const sync=()=>{
+      p.sprinklered=$("#e-spr").checked;
+      p.documented=Object.assign({},p.documented,{exit_signs_shown:$("#e-signs").checked});
+      p.accessibility=Object.assign({},p.accessibility,{accessible_route_from_parking:$("#e-route").checked,accessible_restroom:$("#e-wc").checked});
+      document.querySelectorAll("[data-door]").forEach(inp=>p.exits[+inp.dataset.door].door_clear_width_in=+inp.value||0);
+      p.exit_separation_ft=+$("#e-sep").value||0; p.max_travel_distance_ft=+$("#e-trav").value||0;
+      $("#plan").innerHTML=planSVG(p);
+      $("#facts .fact:nth-child(3) .v").textContent=p.max_travel_distance_ft+" ft";
+      renderList();
+    };
+    document.querySelectorAll("#edit input").forEach(i=>i.oninput=sync);
+  }
+
+  function reset(){
+    ["s1","s2","s3"].forEach(id=>$("#"+id).classList.remove("live"));
+    ["s1n","s2n","s3n"].forEach(id=>$("#"+id).textContent="–");
+    $("#letter").innerHTML='<div class="empty">Run the review to draft the correction letter.</div>';
+    $("#log").innerHTML='<li class="empty">Nothing yet.</li>';
+    $("#held").innerHTML='<li class="empty" style="border:0;background:none">Nothing held.</li>';
+  }
+
+  const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
+  async function runReview(){
+    reset();
+    const p = state[cur]; const r = E.run(p, $("#aimix").checked);
+    $("#s1").classList.add("live"); $("#s1n").textContent=r.drafts.length; await wait(450);
+    $("#s2").classList.add("live"); $("#s2n").textContent=r.log.length;
+    $("#log").innerHTML = r.log.length? r.log.map(l=>`<li>${esc(l)}</li>`).join("") : '<li class="empty">No changes needed.</li>'; await wait(450);
+    $("#s3").classList.add("live"); $("#s3n").textContent=`${r.accepted.length} / ${r.rejected.length}`;
+    $("#held").innerHTML = r.rejected.length? r.rejected.map(x=>`<li><b>${esc(x.finding.check_id)}</b> — ${esc(x.problems.join("; "))}</li>`).join("") : '<li class="empty" style="border:0;background:none">Nothing held.</li>';
+    const today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+    $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div></div>
+      <div class="m">${today}<br>${p.occupancy} · ${p.sprinklered?"Sprinklered":"Not sprinklered"}<br>Occupant load ${r.load}</div></div>
+      ${r.accepted.length? r.accepted.map((f,i)=>`<div class="cm"><div class="i">${i+1}</div><div>
+        <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>${f.source!=="rules"?'<span class="chip plain">AI draft</span>':""}<span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span></div>
+        <div class="t">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div></div></div>`).join("")
+      : '<div class="clean">✓ No corrections. Plans appear to comply with the items checked.</div>'}`;
+  }
+  $("#run").onclick=runReview;
+
+  // ---------- QA gate ----------
+  const checks=["DOOR-WIDTH","EXIT-SEP","EXITS-COUNT","EGRESS-WIDTH","STAIR-WIDTH","TRAVEL","CORRIDOR","SPRINKLER-A2","POSTING","EXIT-SIGNS","OL-DOC","ACCESSIBLE-ROUTE","ACCESSIBLE-RESTROOM","OTHER"];
+  $("#g-check").innerHTML=checks.map(c=>`<option>${c}</option>`).join("");
+  const ex=[...D.gateCases.should_reject.slice(0,7).map(c=>({...c,good:false})),...D.gateCases.should_accept.slice(0,2).map(c=>({...c,good:true}))];
+  $("#examples").innerHTML = ex.map((c,i)=>`<button class="${c.good?"good":""}" data-i="${i}">${c.good?"✓ ":"✗ "}${esc(c.label)}</button>`).join("");
+  document.querySelectorAll("#examples button").forEach(b=>b.onclick=()=>{
+    const c=ex[+b.dataset.i];
+    if(!checks.includes(c.check_id)){const o=document.createElement("option");o.textContent=c.check_id;$("#g-check").appendChild(o);}
+    $("#g-check").value=c.check_id; $("#g-sev").value=c.severity; $("#g-sheet").value=c.sheet; $("#g-sec").value=c.section; $("#g-com").value=c.comment; $("#g-ev").value=c.evidence||"";
+    if(![...$("#g-sev").options].some(o=>o.value===c.severity)){const o=document.createElement("option");o.textContent=c.severity;$("#g-sev").appendChild(o);$("#g-sev").value=c.severity;}
+    gateNow();
+  });
+  function gateNow(){
+    const f={check_id:$("#g-check").value,severity:$("#g-sev").value,sheet:$("#g-sheet").value,section:$("#g-sec").value,comment:$("#g-com").value,evidence:$("#g-ev").value,notes:[]};
+    const rs=E.gateRules(f); const fails=rs.filter(r=>!r.ok);
+    $("#verdict").className="verdict "+(fails.length?"fail":"pass");
+    $("#verdict").textContent=fails.length?`Held for human review (${fails.length})`:"Passes the gate";
+    $("#rules").innerHTML=rs.map(r=>`<li><span class="${r.ok?"y":"x"}">${r.ok?"✓":"✗"}</span><div>${esc(r.rule)}${r.ok?"":`<small>${esc(r.why)}</small>`}</div></li>`).join("");
+  }
+  document.querySelectorAll("#v-gate input,#v-gate textarea,#v-gate select").forEach(i=>i.oninput=gateNow);
+
+  // ---------- results ----------
+  function renderResults(){
+    const ev=E.evaluate(D.projects);
+    const pct=(x)=>Math.round(x*100)+"%";
+    $("#tiles").innerHTML=`
+      <div class="tile"><div class="k">Precision</div><div class="v">${pct(ev.precision)}</div><div class="s">${ev.fp} false positives across ${ev.rows.length} projects</div></div>
+      <div class="tile"><div class="k">Recall</div><div class="v">${pct(ev.recall)}</div><div class="s">${ev.tp} of ${ev.tp+ev.fn} expected findings</div></div>
+      <div class="tile"><div class="k">QA gate red team</div><div class="v">${ev.gate.bad}/${ev.gate.badTotal}</div><div class="s">bad comments blocked · ${ev.gate.good}/${ev.gate.goodTotal} good ones passed</div></div>`;
+    $("#table").innerHTML=`<tr><th>Project</th><th>Expected</th><th>Found</th><th>False positives</th><th>Missed</th></tr>`+
+      ev.rows.map(r=>`<tr><td><b>${r.id}</b> ${esc(r.name.replace(" (fictional)",""))}</td><td>${r.expected}</td><td>${r.found}</td>
+        <td>${r.extra.length?r.extra.map(s=>"§"+s).join(", "):'<span class="pill okk">none</span>'}</td>
+        <td>${r.missed.length?r.missed.map(s=>`<span class="pill miss">§${s}</span>`).join(" ")+(r.missed.includes("1009.1")?' <small style="color:var(--muted)">accessible means of egress, not modeled yet</small>':""):'<span class="pill okk">none</span>'}</td></tr>`).join("");
+  }
+
+  renderList(); renderProject(); gateNow();
+  setTimeout(runReview, 350);
+})();
+</script>
+</body>
+</html>

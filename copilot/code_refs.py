@@ -16,12 +16,13 @@ SECTIONS: dict[str, str] = {
     "1005.3.2": "Egress capacity for components other than stairways is based on 0.2 inch of width per occupant (reductions apply only under listed exceptions).",
     "1006.3.3": "Minimum number of exits per story: 2 for 1-500 occupants, 3 for 501-1,000, and 4 for more than 1,000 (Table 1006.3.3).",
     "1007.1.1": "Where two exits are required, they must be separated by at least one-half of the overall diagonal of the area served, or one-third where the building is fully sprinklered.",
+    "1009.1": "Accessible spaces must be served by accessible means of egress; where more than one exit is required, at least two accessible means of egress are required.",
     "1010.1.1": "Egress doors must provide a minimum clear opening width of 32 inches.",
     "1013.1": "Exit signs are required where two or more exits or exit access doorways are required.",
     "1017.2": "Exit access travel distance may not exceed the limits in Table 1017.2 for the occupancy and sprinkler condition.",
     "1020.3": "Corridors serving an occupant load of 50 or more must be at least 44 inches wide.",
     "1104.1": "At least one accessible route is required from site arrival points (public streets, accessible parking, loading zones) to an accessible building entrance.",
-    "1109.2": "Toilet and bathing facilities must be accessible where they are provided.",
+    "1110.2": "Toilet and bathing facilities must be accessible where they are provided.",
 }
 
 # Table 1004.5 factors used by the demo, in sq ft per occupant.

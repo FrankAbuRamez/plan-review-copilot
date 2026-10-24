@@ -35,6 +35,17 @@ class RuleTests(unittest.TestCase):
         self.assertIn("EXIT-SEP", ids)  # 60 ft < 210/3 = 70 ft
         self.assertIn("TRAVEL", ids)    # 320 ft > 300 ft
 
+    def test_accessibility_checks(self):
+        bistro = {f.check_id for f in rules.review(load_project(PROJECTS / "p2_bistro.json"))}
+        market = {f.check_id for f in rules.review(load_project(PROJECTS / "p5_corner_market.json"))}
+        self.assertIn("ACCESSIBLE-RESTROOM", bistro)
+        self.assertIn("ACCESSIBLE-ROUTE", market)
+        self.assertNotIn("ACCESSIBLE-ROUTE", bistro)
+
+    def test_sprinklered_storage_travel_limit(self):
+        ids = {f.check_id for f in rules.review(load_project(PROJECTS / "p8_warehouse.json"))}
+        self.assertEqual(ids, {"TRAVEL"})  # 265 ft > 250 ft; 36 in. corridor serves only 10, so no corridor comment
+
 
 class AuditTests(unittest.TestCase):
     def test_life_safety_severity_is_raised(self):

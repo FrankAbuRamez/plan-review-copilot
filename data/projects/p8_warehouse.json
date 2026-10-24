@@ -1,0 +1,59 @@
+{
+  "id": "P8",
+  "name": "Northgate Distribution Warehouse (fictional)",
+  "occupancy": "S-1",
+  "group_letter": "S-1",
+  "sprinklered": true,
+  "stories": 1,
+  "spaces": [
+    {
+      "name": "Warehouse",
+      "use": "storage",
+      "area_sf": 24000
+    },
+    {
+      "name": "Office",
+      "use": "business",
+      "area_sf": 1500
+    }
+  ],
+  "exits": [
+    {
+      "id": "D1",
+      "door_clear_width_in": 36
+    },
+    {
+      "id": "D2",
+      "door_clear_width_in": 36
+    }
+  ],
+  "overall_diagonal_ft": 200,
+  "exit_separation_ft": 90,
+  "max_travel_distance_ft": 265,
+  "corridors": [
+    {
+      "name": "office corridor",
+      "width_in": 36,
+      "occupant_load_served": 10
+    }
+  ],
+  "documented": {
+    "occupant_load_on_plans": true,
+    "exit_signs_shown": true
+  },
+  "accessibility": {
+    "accessible_route_from_parking": true,
+    "accessible_restroom": true
+  },
+  "sheets": {
+    "code_analysis": "G-001",
+    "egress": "A-101",
+    "door_schedule": "A-601"
+  },
+  "expected_findings": [
+    {
+      "id": "TRAVEL",
+      "section": "1017.2"
+    }
+  ]
+}

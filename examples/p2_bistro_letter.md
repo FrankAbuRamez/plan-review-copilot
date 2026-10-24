@@ -14,13 +14,19 @@ Provide an automatic sprinkler system throughout the fire area, or revise the de
 
 _Basis: Triggered by: occupant load 125 >= 100_
 
-**3. [Major] Building — Sheet A-601 — IBC 2021 §1010.1.1**
+**3. [Major] Accessibility — Sheet A-101 — IBC 2021 §1110.2**
+
+Revise the restroom layout so each toilet room provided is accessible, and provide enlarged plans with clearances.
+
+_Basis: Toilet room provided; no accessible fixtures or clearances shown._
+
+**4. [Major] Building — Sheet A-601 — IBC 2021 §1010.1.1**
 
 Revise door(s) D2 to provide a minimum 32 in. clear opening width.
 
 _Basis: Clear widths: D1=36 in., D2=30 in._
 
-**4. [Minor] Building — Sheet A-101 — IBC 2021 §1004.3**
+**5. [Minor] Building — Sheet A-101 — IBC 2021 §1004.3**
 
 Provide a note and location for the posted maximum occupant load sign.
 
