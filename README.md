@@ -10,9 +10,19 @@ A personal learning project to test how AI review can be made safe, not a produc
 
 Built by an ICC-certified building plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
 
-**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code family (California, I-Codes or Florida) and disciplines. It reviews dwellings and ADUs under the residential code (CRC, IRC, FBC Residential) and everything else under the building code, add your Claude API key, and click Generate comments. It uses Claude Sonnet 5.5 by default (lower cost), with Claude Opus 5.5 as an option for harder sets. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
+## What it does
 
-Citations outside the built-in verified library are marked "verify citation" rather than blocked, because a real review cites the whole code.
+- **New review.** Drop in plan sets and calculation PDFs, pick the code family (California, I-Codes or Florida) and disciplines. Dwellings and ADUs are reviewed under the residential code (CRC, IRC, FBC Residential), everything else under the building code. A pre-approved plan mode reviews only site-specific items and deviations from the approved set.
+- **Recheck.** Upload the resubmittal with the earlier letter. Each previous comment is marked Cleared, Partly cleared, Not cleared or Cannot verify, with a follow-up comment for anything still open, and new unclouded changes are flagged.
+- **Code checklist.** A required pass over the mandatory items (for a dwelling: fire separation, safety glazing, escape openings, smoke and CO alarms, sprinklers, landings, attic access, address, exhaust), each marked Complies, Not shown, Noncompliant or N/A, so a miss is visible instead of silent.
+- **Every comment shows its sheet, code section, evidence and page.** Click the page chip to open the sheet.
+- **Reviewer workspace.** Edit any comment, take it out of the letter, or move it between the letter and the held list. Add the plan check number, reviewer and jurisdiction.
+- **Exports.** Copy, Word, print or PDF, and JSON. The review survives a page refresh.
+- **Cost and speed.** Claude Sonnet 5.5 by default, with Claude Opus 5.5 as an option. A 20-sheet ADU set took about 4 to 5 minutes and about $0.70 in testing on public pre-approved plans.
+
+The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
+
+Citations outside the built-in verified library are marked "verify citation" rather than blocked, because a real review cites the whole code. Every comment is a draft for a certified plans examiner to verify.
 
 > The test projects in this repo are **fictional and synthetic**. No client, employer or jurisdiction data is used. Code sections are cited by number with paraphrased summaries; verify against the adopted code and local amendments.
 
@@ -57,6 +67,8 @@ Sample output: [`examples/p2_bistro_letter.md`](examples/p2_bistro_letter.md).
 # Review real documents (needs ANTHROPIC_API_KEY or `ant auth login`)
 pip install -r requirements.txt
 python -m copilot review plans.pdf structural_calcs.pdf --code "2025 California codes" --out letter.md
+python -m copilot review plans.pdf --code "2025 California codes" --standard-plan
+python -m copilot recheck resubmittal.pdf --previous first_letter.md --code "2025 California codes"
 
 # Rules engine and tests (no API key needed)
 python -m unittest discover -s tests -t .          # 15 tests

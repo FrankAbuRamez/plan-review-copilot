@@ -14,7 +14,8 @@ from .code_refs import is_known
 
 ACTION_VERBS = ("Provide", "Revise", "Clarify", "Show", "Verify", "Coordinate", "Remove", "Add", "Specify", "Replace", "Correct", "Update",
                 "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain", "Complete", "Confirm",
-                "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile")
+                "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile",
+                "Select", "Choose", "State", "Mark", "Enter", "Delete", "Change", "Use", "Cite", "Note")
 HEDGES = ("maybe", "might", "possibly", "perhaps", "consider", "i think", "probably", "it seems")
 # Plan reviewers cite requirements, not products. Brand or model references are
 # a common failure mode for LLM drafts, so they are blocked outright.

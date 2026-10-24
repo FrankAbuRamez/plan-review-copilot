@@ -161,7 +161,8 @@
     // ---------- Stage 3: QA gate ----------
     const VERBS = ["Provide", "Revise", "Clarify", "Show", "Verify", "Coordinate", "Remove", "Add", "Specify", "Replace", "Correct", "Update",
       "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain", "Complete", "Confirm",
-      "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile"];
+      "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile",
+      "Select", "Choose", "State", "Mark", "Enter", "Delete", "Change", "Use", "Cite", "Note"];
     const HEDGES = ["maybe", "might", "possibly", "perhaps", "consider", "i think", "probably", "it seems"];
     const PRODUCTS = [/[®™]/, /\b[Mm]odel\s+(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]+\b/, /\b(Simpson|Hilti|USG|Kidde|Tyco|Viking|Hager|Schlage|Von Duprin|Allegion|Owens Corning)\b/];
     const QUANT = ["EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"];

@@ -139,7 +139,7 @@ async function generate() {
   const secs = () => Math.round((Date.now() - t0) / 1000);
   const progress = { phase: "upload", text: "" };
   const tick = setInterval(() => {
-    const n = (progress.text.match(/"comment"\s*:/g) || []).length;
+    const n = (progress.text.match(/"(comment|follow_up)"\s*:/g) || []).length;
     const label = progress.phase === "upload" ? `sending ${files.length} file(s)`
       : progress.phase === "thinking" ? "reading the sheets and checking the code"
       : `writing comments${n ? ` (${n} so far)` : ""}`;
