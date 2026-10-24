@@ -12,7 +12,8 @@ def review_cmd(argv: list[str]) -> None:
 
     parser = argparse.ArgumentParser(prog="python -m copilot review", description="Draft comments from plan and calc documents.")
     parser.add_argument("files", nargs="+", help="plan / calculation PDFs or sheet images")
-    parser.add_argument("--code", default="2024 IBC", help='code basis, e.g. "2025 CBC" or "2023 FBC (8th Edition)"')
+    parser.add_argument("--code", default="2024 I-Codes (IRC for dwellings, IBC for everything else)",
+                        help='code family, e.g. "2025 California codes" or "2023 Florida codes, 8th Edition"')
     parser.add_argument("--disciplines", help="comma-separated, default: all")
     parser.add_argument("--notes", default="", help="anything the reviewer should know (scope, jurisdiction)")
     parser.add_argument("--model", default="claude-sonnet-5-5", help="claude-sonnet-5-5 (default, lower cost) or claude-opus-5-5")

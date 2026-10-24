@@ -12,6 +12,7 @@
       "additionalProperties": false,
       "required": [
         "name",
+        "governing_code",
         "occupancy",
         "construction_type",
         "sprinklered",
@@ -21,6 +22,9 @@
       ],
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "governing_code": {
           "type": "string"
         },
         "occupancy": {

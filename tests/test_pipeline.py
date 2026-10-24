@@ -120,6 +120,18 @@ class DocumentModeTests(unittest.TestCase):
         self.assertEqual(travel.severity, "Critical")  # life-safety section raised by the senior audit
 
     def test_prompt_fills_placeholders(self):
-        text = self.dr.system_prompt("2025 CBC (California)", ["Building", "Accessibility"])
+        text = self.dr.system_prompt("2025 California codes (CRC for dwellings and ADUs, CBC for everything else)", ["Building"])
         self.assertNotIn("{", text)
-        self.assertIn("2025 CBC §1005.3.2", text)
+        self.assertIn("2025 CRC §R310.2.1", text)
+
+    def test_residential_sections_parse_and_count_as_life_safety(self):
+        self.assertEqual(senior_audit.section_number("2025 CRC §R310.2.1"), "R310.2.1")
+        f = Finding("C01", "Fire and Life Safety", "Major", "A-2", "2025 CRC §R310.2.1",
+                    "Provide emergency escape and rescue openings in each bedroom.", "No window schedule.")
+        audited, _ = senior_audit.audit([f], strict=False)
+        self.assertEqual(audited[0].severity, "Critical")
+
+    def test_replace_counts_as_an_action(self):
+        f = Finding("C02", "Structural", "Minor", "SNS-1", "2025 CRC §R602.3",
+                    "Replace the web printout fastener table with the code fastening schedule.", "")
+        self.assertEqual(qa_gate.check(f, strict=False), [])

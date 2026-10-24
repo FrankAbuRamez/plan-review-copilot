@@ -54,6 +54,15 @@ const toBase64 = (f) => new Promise((res, rej) => {
   r.readAsDataURL(f);
 });
 
+// Same rule as copilot/doc_reviewer.py: show a residential and a building citation.
+function exampleCitation(code) {
+  const year = code.split(" ")[0];
+  if (/California/.test(code)) return `${year} CRC §R310.2.1 for a dwelling, or ${year} CBC §1005.3.2`;
+  if (/I-Codes/.test(code)) return `${year} IRC §R310.2.1 for a dwelling, or ${year} IBC §1005.3.2`;
+  if (/Florida/.test(code)) return "FBC Residential §R310.2.1 for a dwelling, or FBC Building §1005.3.2";
+  return `${code.split("(")[0].trim()} §1005.3.2`;
+}
+
 // ---------- run ----------
 function stage(id, n, live = true) { $("#" + id).classList.toggle("live", live); if (n !== undefined) $("#" + id + "n").textContent = n; }
 function showErr(msg) { $("#err").hidden = !msg; $("#err").textContent = msg || ""; }
@@ -79,9 +88,8 @@ async function generate() {
   const code = $("#code").value === "other" ? ($("#code-other").value.trim() || "2024 IBC") : $("#code").value;
   const disciplines = [...document.querySelectorAll("#disc input:checked")].map((i) => i.value);
   if (!disciplines.length) { showErr("Pick at least one discipline."); return; }
-  const edition = code.split("(")[0].trim();
   const system = D.docPrompt.replaceAll("{code_basis}", code).replaceAll("{disciplines}", disciplines.join(", "))
-    .replaceAll("{example_citation}", `${edition} §1005.3.2`);
+    .replaceAll("{example_citation}", exampleCitation(code));
 
   $("#stages").hidden = false; $("#out").hidden = true;
   ["s1", "s2", "s3"].forEach((s) => stage(s, "–", false));
@@ -144,7 +152,7 @@ function render(raw, r, code) {
       ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify">verify citation</span>' : ""}</div>
       <div class="t">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div></div></div>`).join("");
   $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div></div>
-      <div class="m">${today}<br>${esc(code)}</div></div>
+      <div class="m">${today}<br>${esc(p.governing_code || code)}</div></div>
     <div class="proj">
       <div><b>Occupancy</b>${esc(p.occupancy)}</div><div><b>Construction</b>${esc(p.construction_type)}</div><div><b>Sprinklered</b>${esc(p.sprinklered)}</div>
       <div><b>Stories</b>${esc(p.stories)}</div><div><b>Area</b>${esc(p.building_area)}</div><div><b>Scope</b>${esc(p.scope)}</div>
@@ -155,7 +163,7 @@ function render(raw, r, code) {
     : '<li class="empty" style="border:0;background:none">Nothing held.</li>';
   $("#nr").innerHTML = (raw.not_reviewed || []).length ? raw.not_reviewed.map((x) => `<li>${esc(x)}</li>`).join("") : '<li class="empty">Nothing flagged.</li>';
   $("#log").innerHTML = r.log.length ? r.log.map((l) => `<li>${esc(l)}</li>`).join("") : '<li class="empty">No changes needed.</li>';
-  lastLetter = ["PLAN REVIEW CORRECTIONS", p.name || "", `${code} · ${today}`, ""]
+  lastLetter = ["PLAN REVIEW CORRECTIONS", p.name || "", `${p.governing_code || code} · ${today}`, ""]
     .concat(r.accepted.map((f, i) => `${i + 1}. [${f.severity}] ${f.discipline} · Sheet ${f.sheet} · ${f.section}\n   ${f.comment}`)).join("\n");
   $("#out").hidden = false;
   $("#out").scrollIntoView({ behavior: "smooth" });

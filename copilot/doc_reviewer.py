@@ -26,11 +26,21 @@ MEDIA = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", "
 MAX_REQUEST_BYTES = 32 * 1024 * 1024
 
 
+def example_citation(code_basis: str) -> str:
+    year = code_basis.split()[0]
+    if "California" in code_basis:
+        return f"{year} CRC §R310.2.1 for a dwelling, or {year} CBC §1005.3.2"
+    if "I-Codes" in code_basis:
+        return f"{year} IRC §R310.2.1 for a dwelling, or {year} IBC §1005.3.2"
+    if "Florida" in code_basis:
+        return "FBC Residential §R310.2.1 for a dwelling, or FBC Building §1005.3.2"
+    return f"{code_basis.split('(')[0].strip()} §1005.3.2"
+
+
 def system_prompt(code_basis: str, disciplines: list[str]) -> str:
-    edition = code_basis.split("(")[0].strip()
     return (PROMPT.replace("{code_basis}", code_basis)
             .replace("{disciplines}", ", ".join(disciplines))
-            .replace("{example_citation}", f"{edition} §1005.3.2"))
+            .replace("{example_citation}", example_citation(code_basis)))
 
 
 def document_blocks(paths: list[str]) -> list[dict]:
@@ -94,7 +104,7 @@ def review_documents(paths: list[str], code_basis: str, disciplines: list[str] |
 def render(raw: dict, accepted: list[Finding], rejected, code_basis: str) -> str:
     p = raw["project"]
     lines = [f"# Plan Review Corrections — {p['name']}", "",
-             f"Code basis {code_basis} · Occupancy {p['occupancy']} · Construction {p['construction_type']} · "
+             f"Governing code {p['governing_code']} · Occupancy {p['occupancy']} · Construction {p['construction_type']} · "
              f"Sprinklered {p['sprinklered']} · {p['stories']} stories · {p['building_area']}", "",
              f"Scope: {p['scope']}", ""]
     for i, f in enumerate(accepted, 1):

@@ -12,10 +12,11 @@ import re
 from .code_refs import is_known
 from .models import SEVERITIES, Finding
 
-LIFE_SAFETY_PREFIXES = ("903.", "1005.", "1006.", "1007.", "1017.")
+LIFE_SAFETY_PREFIXES = ("903.", "1005.", "1006.", "1007.", "1017.",
+                        "R302.", "R310.", "R311.", "R313.", "R314.", "R315.")  # residential code life safety
 DOCUMENTATION_SECTIONS = ("107.2.3", "1004.3")
-# Accepts IBC-style (1005.3.2) and CBC-style (11B-404.2.3) section numbers.
-SECTION_RE = re.compile(r"§\s*([0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)")
+# Accepts IBC-style (1005.3.2), CBC-style (11B-404.2.3) and IRC/CRC-style (R302.1, N1102.1) section numbers.
+SECTION_RE = re.compile(r"§\s*([A-Z]{0,2}[0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)")
 
 
 def section_number(citation: str) -> str | None:

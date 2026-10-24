@@ -10,7 +10,7 @@ A personal learning project to test how AI review can be made safe, not a produc
 
 Built by an ICC-certified building plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
 
-**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code basis (CBC, IBC or FBC) and disciplines, add your Claude API key, and click Generate comments. It uses Claude Sonnet 5.5 by default (lower cost), with Claude Opus 5.5 as an option for harder sets. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
+**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code family (California, I-Codes or Florida) and disciplines. It reviews dwellings and ADUs under the residential code (CRC, IRC, FBC Residential) and everything else under the building code, add your Claude API key, and click Generate comments. It uses Claude Sonnet 5.5 by default (lower cost), with Claude Opus 5.5 as an option for harder sets. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
 
 Citations outside the built-in verified library are marked "verify citation" rather than blocked, because a real review cites the whole code.
 
@@ -56,7 +56,7 @@ Sample output: [`examples/p2_bistro_letter.md`](examples/p2_bistro_letter.md).
 ```bash
 # Review real documents (needs ANTHROPIC_API_KEY or `ant auth login`)
 pip install -r requirements.txt
-python -m copilot review plans.pdf structural_calcs.pdf --code "2025 CBC" --out letter.md
+python -m copilot review plans.pdf structural_calcs.pdf --code "2025 California codes" --out letter.md
 
 # Rules engine and tests (no API key needed)
 python -m unittest discover -s tests -t .          # 15 tests
