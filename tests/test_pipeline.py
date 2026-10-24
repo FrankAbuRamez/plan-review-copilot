@@ -87,3 +87,39 @@ class LetterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DocumentModeTests(unittest.TestCase):
+    """Real documents cite the whole code, so the gate runs in non-strict mode."""
+
+    def setUp(self):
+        from copilot import doc_reviewer
+        self.dr = doc_reviewer
+        self.raw = {"project": {}, "not_reviewed": [], "comments": [
+            {"discipline": "Accessibility", "severity": "Major", "sheet": "A-401", "section": "2025 CBC §11B-304.3",
+             "comment": "Provide a 60 in. turning space in toilet room 104 and dimension it on the enlarged plan.", "basis": "Room is 5'-2\" x 4'-8\"."},
+            {"discipline": "Building", "severity": "Minor", "sheet": "A-101", "section": "2025 CBC §1017.2",
+             "comment": "Revise layout since travel distance might exceed the limit.", "basis": ""},
+            {"discipline": "Building", "severity": "Major", "sheet": "A-601", "section": "",
+             "comment": "Provide panic hardware by a named manufacturer on doors serving the dining room.", "basis": ""},
+        ]}
+
+    def test_cbc_section_numbers_parse(self):
+        self.assertEqual(senior_audit.section_number("2025 CBC §11B-304.3"), "11B-304.3")
+        self.assertEqual(senior_audit.section_number("IBC 2021 §1005.3.2"), "1005.3.2")
+
+    def test_non_strict_gate_flags_instead_of_blocking(self):
+        audited, _ = senior_audit.audit(self.dr.to_findings(self.raw), strict=False)
+        accepted, rejected = qa_gate.gate(audited, strict=False)
+        self.assertEqual([f.check_id for f in accepted], ["C01"])
+        self.assertIn("VERIFY_CITATION", accepted[0].notes)
+        reasons = {f.check_id: problems for f, problems in rejected}
+        self.assertTrue(any("hedging" in r for r in reasons["C02"]))
+        self.assertTrue(any("missing code citation" in r for r in reasons["C03"]))
+        travel = next(f for f, _ in rejected if f.check_id == "C02")
+        self.assertEqual(travel.severity, "Critical")  # life-safety section raised by the senior audit
+
+    def test_prompt_fills_placeholders(self):
+        text = self.dr.system_prompt("2025 CBC (California)", ["Building", "Accessibility"])
+        self.assertNotIn("{", text)
+        self.assertIn("2025 CBC §1005.3.2", text)

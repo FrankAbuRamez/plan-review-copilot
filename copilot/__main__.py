@@ -1,17 +1,40 @@
-"""Usage: python -m copilot data/projects/p2_bistro.json [--llm] [--out letter.md]"""
+"""Usage:
+    python -m copilot review plans.pdf calcs.pdf --code "2025 CBC" [--out letter.md]
+    python -m copilot data/projects/p2_bistro.json [--llm] [--out letter.md]
+"""
 import argparse
+import sys
 from pathlib import Path
 
-from .pipeline import load_project, render_letter, run
+
+def review_cmd(argv: list[str]) -> None:
+    from . import doc_reviewer
+
+    parser = argparse.ArgumentParser(prog="python -m copilot review", description="Draft comments from plan and calc documents.")
+    parser.add_argument("files", nargs="+", help="plan / calculation PDFs or sheet images")
+    parser.add_argument("--code", default="2024 IBC", help='code basis, e.g. "2025 CBC" or "2023 FBC (8th Edition)"')
+    parser.add_argument("--disciplines", help="comma-separated, default: all")
+    parser.add_argument("--notes", default="", help="anything the reviewer should know (scope, jurisdiction)")
+    parser.add_argument("--out", help="write the letter to this Markdown file")
+    args = parser.parse_args(argv)
+    disciplines = [d.strip() for d in args.disciplines.split(",")] if args.disciplines else None
+    raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes)
+    letter = doc_reviewer.render(raw, accepted, rejected, args.code)
+    if args.out:
+        Path(args.out).write_text(letter, encoding="utf-8")
+        print(f"Wrote {args.out}: {len(accepted)} comments, {len(rejected)} held for review")
+    else:
+        print(letter)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Draft a plan review correction letter.")
+def project_cmd(argv: list[str]) -> None:
+    from .pipeline import load_project, render_letter, run
+
+    parser = argparse.ArgumentParser(description="Draft a correction letter from a structured project record.")
     parser.add_argument("project", help="path to a project JSON file")
     parser.add_argument("--llm", action="store_true", help="add Claude as a second first-pass reviewer")
     parser.add_argument("--out", help="write the letter to this Markdown file")
-    args = parser.parse_args()
-
+    args = parser.parse_args(argv)
     project = load_project(args.project)
     result = run(project, use_llm=args.llm)
     letter = render_letter(project, result)
@@ -20,6 +43,14 @@ def main() -> None:
         print(f"Wrote {args.out}: {len(result.accepted)} corrections, {len(result.rejected)} held for review")
     else:
         print(letter)
+
+
+def main() -> None:
+    argv = sys.argv[1:]
+    if argv and argv[0] == "review":
+        review_cmd(argv[1:])
+    else:
+        project_cmd(argv)
 
 
 if __name__ == "__main__":

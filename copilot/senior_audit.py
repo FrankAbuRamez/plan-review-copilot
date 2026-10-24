@@ -14,7 +14,8 @@ from .models import SEVERITIES, Finding
 
 LIFE_SAFETY_PREFIXES = ("903.", "1005.", "1006.", "1007.", "1017.")
 DOCUMENTATION_SECTIONS = ("107.2.3", "1004.3")
-SECTION_RE = re.compile(r"§\s*([0-9]+(?:\.[0-9]+)*)")
+# Accepts IBC-style (1005.3.2) and CBC-style (11B-404.2.3) section numbers.
+SECTION_RE = re.compile(r"§\s*([0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)")
 
 
 def section_number(citation: str) -> str | None:
@@ -22,15 +23,20 @@ def section_number(citation: str) -> str | None:
     return match.group(1) if match else None
 
 
-def audit(findings: list[Finding]) -> tuple[list[Finding], list[str]]:
+def audit(findings: list[Finding], strict: bool = True) -> tuple[list[Finding], list[str]]:
+    """strict=True: citations must be in the verified library (synthetic projects).
+    strict=False: real documents cite the full code, so unknown sections are flagged
+    for the reviewer to verify instead of being blocked."""
     log: list[str] = []
     by_key: dict[tuple[str, str], Finding] = {}
 
     for finding in findings:
         number = section_number(finding.section)
-        if number is None or not is_known(number):
+        if number is None or (strict and not is_known(number)):
             finding.notes.append("UNVERIFIED_CITATION")
             log.append(f"{finding.check_id}: citation '{finding.section}' not in reference library")
+        elif not is_known(number):
+            finding.notes.append("VERIFY_CITATION")
 
         if number and number.startswith(LIFE_SAFETY_PREFIXES) and finding.severity != "Critical":
             log.append(f"{finding.check_id}: severity raised {finding.severity} -> Critical (life safety)")

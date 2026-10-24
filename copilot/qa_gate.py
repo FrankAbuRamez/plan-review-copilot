@@ -24,7 +24,7 @@ PRODUCT_PATTERNS = (
 QUANTITATIVE_CHECKS = {"EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"}
 
 
-def check(finding: Finding) -> list[str]:
+def check(finding: Finding, strict: bool = True) -> list[str]:
     problems: list[str] = []
     text = finding.comment.strip()
 
@@ -33,7 +33,7 @@ def check(finding: Finding) -> list[str]:
     number = section_number(finding.section)
     if number is None:
         problems.append("missing code citation")
-    elif not is_known(number) or "UNVERIFIED_CITATION" in finding.notes:
+    elif (strict and not is_known(number)) or "UNVERIFIED_CITATION" in finding.notes:
         problems.append(f"citation §{number} is not in the verified reference library")
     if not finding.sheet.strip():
         problems.append("missing sheet reference")
@@ -52,11 +52,11 @@ def check(finding: Finding) -> list[str]:
     return problems
 
 
-def gate(findings: list[Finding]) -> tuple[list[Finding], list[tuple[Finding, list[str]]]]:
+def gate(findings: list[Finding], strict: bool = True) -> tuple[list[Finding], list[tuple[Finding, list[str]]]]:
     accepted: list[Finding] = []
     rejected: list[tuple[Finding, list[str]]] = []
     for finding in findings:
-        problems = check(finding)
+        problems = check(finding, strict)
         if problems:
             rejected.append((finding, problems))
         else:

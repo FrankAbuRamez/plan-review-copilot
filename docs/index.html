@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plan Review Copilot</title>
-<meta name="description" content="AI-assisted plan review demo: draft corrections, senior audit, QA gate. Synthetic data.">
+<meta name="description" content="Upload plans and calcs; Claude drafts correction comments, then a senior audit and QA gate check every one.">
 <style>
 :root{
   --bg:#f4f5f7; --panel:#ffffff; --ink:#151a23; --muted:#667085; --line:#e4e7ec; --soft:#f8f9fb;
@@ -28,6 +28,7 @@
   --ok:#5fd39a; --ok-soft:#143226; --held:#c3a0ff; --held-soft:#2a1f45; --paper:#1b1f27; --shadow:none;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
 .top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -113,6 +114,33 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .empty{color:var(--muted);font-size:13px}
 .disclaim{font-size:12px;color:var(--muted);margin-top:14px}
 
+.setup{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px}
+@media (max-width:1000px){.setup{grid-template-columns:1fr}}
+.step{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;display:inline-grid;place-items:center;font-size:13px;font-weight:800}
+.drop{display:flex;gap:14px;align-items:center;border:2px dashed var(--line);border-radius:12px;padding:22px;cursor:pointer;background:var(--soft)}
+.drop.over{border-color:var(--brand);background:var(--brand-soft)}
+.drop-ic{width:44px;height:44px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:22px;flex:none}
+.drop span{color:var(--muted);font-size:13px}
+.flist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.flist li{display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px}
+.flist li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flist li small{color:var(--muted)}
+.flist button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px}
+.size{font-size:12px;color:var(--muted);margin-top:8px}
+.size.bad{color:var(--crit);font-weight:700}
+.disc{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.disc label,.inline{display:flex!important;gap:8px;align-items:center;font-size:13px;color:var(--ink)!important;font-weight:600}
+.disc input,.inline input{width:16px;height:16px;accent-color:var(--brand)}
+.run:disabled{opacity:.45;cursor:not-allowed}
+.err{background:var(--crit-soft);color:var(--crit);border-radius:8px;padding:10px;font-size:13px;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.actions button{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:8px 12px;font-weight:650;cursor:pointer}
+.proj{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;font-size:13px;margin-bottom:10px}
+.proj b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.nr li{font-size:13px;margin-bottom:4px}
+.verify{background:var(--major-soft);color:var(--major)}
+@media print{.top,.setup,.stages,.side,.disclaim,#v-gate,#v-results{display:none!important}.out{display:block!important}.letter{border:0;box-shadow:none;padding:0}body{background:#fff;zoom:1!important}}
+
 /* gate */
 .gate{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
 @media (max-width:900px){.gate{grid-template-columns:1fr}}
@@ -161,55 +189,80 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
   </div>Plan Review Copilot</div>
   <nav class="nav" aria-label="Views">
-    <button class="on" data-v="review">Review</button>
+    <button class="on" data-v="review">Review documents</button>
     <button data-v="gate">QA Gate</button>
-    <button data-v="results">Results</button>
+    <button data-v="results">How it's tested</button>
   </nav>
   <div class="spacer"></div>
-  <span class="badge">Synthetic demo data</span>
+  <span class="badge">Draft comments · reviewer verifies</span>
   <button class="iconbtn" id="theme" title="Light or dark">◐</button>
 </div></div>
 
 <main>
 <!-- REVIEW -->
 <section class="view on" id="v-review">
-  <div class="layout">
-    <aside class="panel">
-      <div class="ph">Projects <small>8 fictional</small></div>
-      <ul class="plist" id="plist"></ul>
-    </aside>
-
-    <div>
-      <div class="panel">
-        <div class="ph" id="ptitle">Project</div>
-        <div class="pb sheet">
-          <div class="plan" id="plan"></div>
-          <div>
-            <div class="facts" id="facts"></div>
-            <div class="edit" id="edit"></div>
-            <div class="hint">Change any value, then run the review again.</div>
-            <label class="aimix"><input type="checkbox" id="aimix"><span>Mix in AI-drafted comments<small>Recorded examples of typical AI mistakes, to watch the audit and gate catch them</small></span></label>
-            <button class="run" id="run">▶ Run review</button>
-          </div>
-        </div>
+  <div class="setup">
+    <div class="panel">
+      <div class="ph"><span class="step">1</span> Plans and calculations</div>
+      <div class="pb">
+        <label class="drop" id="drop">
+          <input type="file" id="files" multiple accept=".pdf,.png,.jpg,.jpeg" hidden>
+          <div class="drop-ic">⬆</div>
+          <div><b>Drop plan sets and calcs here</b><br><span>PDF, PNG or JPG · up to about 23 MB total per review</span></div>
+        </label>
+        <div class="hint">Upload only documents you're authorized to share. Files are sent to Anthropic's API under your key. Large sets may exceed per-request limits, so review one discipline or one volume at a time.</div>
+        <ul class="flist" id="flist"></ul>
+        <div class="size" id="size"></div>
       </div>
+    </div>
 
-      <div class="stages">
-        <div class="stage" id="s1"><div class="n">STAGE 1</div><h4>Draft reviewer</h4><div class="big" id="s1n">–</div><div class="sub">draft findings</div><div class="bar"><i></i></div></div>
-        <div class="stage" id="s2"><div class="n">STAGE 2</div><h4>Senior audit</h4><div class="big" id="s2n">–</div><div class="sub">changes: dedupe, citations, severity</div><div class="bar"><i></i></div></div>
-        <div class="stage" id="s3"><div class="n">STAGE 3</div><h4>QA gate</h4><div class="big" id="s3n">–</div><div class="sub" id="s3s">passed / held for a human</div><div class="bar"><i></i></div></div>
+    <div class="panel">
+      <div class="ph"><span class="step">2</span> Review settings</div>
+      <div class="pb form">
+        <label>Code basis
+          <select id="code">
+            <option>2025 CBC (California)</option><option>2022 CBC (California)</option>
+            <option>2024 IBC</option><option>2021 IBC</option>
+            <option>2023 FBC (Florida, 8th Edition)</option><option>2020 FBC (Florida, 7th Edition)</option>
+            <option value="other">Other…</option>
+          </select>
+        </label>
+        <input id="code-other" placeholder="e.g. 2024 IBC with City of Austin amendments" hidden>
+        <div class="disc" id="disc"></div>
+        <label>Notes for the reviewer (optional)<textarea id="notes" placeholder="Scope, jurisdiction, anything to focus on"></textarea></label>
       </div>
+    </div>
 
-      <div class="out">
-        <div class="letter" id="letter"><div class="empty">Run the review to draft the correction letter.</div></div>
-        <div class="side">
-          <div class="panel"><div class="ph">Senior audit log</div><div class="pb"><ul class="log" id="log"><li class="empty">Nothing yet.</li></ul></div></div>
-          <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held" style="list-style:none;margin:0;padding:0"><li class="empty" style="border:0;background:none">Nothing held.</li></ul></div></div>
-        </div>
+    <div class="panel">
+      <div class="ph"><span class="step">3</span> Claude API key</div>
+      <div class="pb form">
+        <label>API key<input id="key" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+        <label class="inline"><input type="checkbox" id="remember"> Remember on this computer</label>
+        <div class="hint">The key stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com.</div>
+        <button class="run" id="go" disabled>Generate comments</button>
+        <div class="err" id="err" hidden></div>
       </div>
-      <div class="disclaim">Draft output for a licensed reviewer to verify. Code sections are cited by number with paraphrased summaries (IBC 2021). All projects are fictional.</div>
     </div>
   </div>
+
+  <div class="stages" id="stages" hidden>
+    <div class="stage" id="s1"><div class="n">STAGE 1</div><h4>Claude reads and drafts</h4><div class="big" id="s1n">–</div><div class="sub" id="s1s">draft comments</div><div class="bar"><i></i></div></div>
+    <div class="stage" id="s2"><div class="n">STAGE 2</div><h4>Senior audit</h4><div class="big" id="s2n">–</div><div class="sub">dedupe, severity, citations</div><div class="bar"><i></i></div></div>
+    <div class="stage" id="s3"><div class="n">STAGE 3</div><h4>QA gate</h4><div class="big" id="s3n">–</div><div class="sub">passed / held for a human</div><div class="bar"><i></i></div></div>
+  </div>
+
+  <div class="out" id="out" hidden>
+    <div class="letter" id="letter"></div>
+    <div class="side">
+      <div class="panel"><div class="ph">Actions</div><div class="pb actions">
+        <button id="copy">Copy letter</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button>
+      </div></div>
+      <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held"></ul></div></div>
+      <div class="panel"><div class="ph">Not reviewed</div><div class="pb"><ul class="nr" id="nr"></ul></div></div>
+      <div class="panel"><div class="ph">Senior audit log</div><div class="pb"><ul class="log" id="log"></ul></div></div>
+    </div>
+  </div>
+  <div class="disclaim">Draft comments for a certified plans examiner to verify before sending. Citations marked "verify" are outside the built-in verified library.</div>
 </section>
 
 <!-- QA GATE -->
@@ -270,93 +323,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   });
   $("#theme").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";};
 
-  // ---------- review ----------
-  function renderList(){
-    $("#plist").innerHTML = state.map((p,i)=>`<li class="${i===cur?"on":""}" data-i="${i}">
-      <span class="nm">${esc(p.name.replace(" (fictional)",""))}</span>
-      <span class="meta"><span class="occ">${p.occupancy}</span>${p.sprinklered?"Sprinklered":"Not sprinklered"} · ${p.stories||1} story</span></li>`).join("");
-    document.querySelectorAll("#plist li").forEach(li=>li.onclick=()=>{cur=+li.dataset.i;renderList();renderProject();reset();});
-  }
-
-  function planSVG(p){
-    const ex = p.exits||[]; const w=520,h=260,m=30;
-    const doors = ex.map((e,i)=>{
-      const x = ex.length===1? w/2 : m+40+(i*(w-2*m-80))/(ex.length-1);
-      const narrow = e.door_clear_width_in<32;
-      return `<g><rect x="${x-16}" y="${h-m-4}" width="32" height="8" rx="2" fill="${narrow?"var(--crit)":"var(--ok)"}"/>
-        <text x="${x}" y="${h-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(e.id)} · ${e.door_clear_width_in}"</text></g>`;
-    }).join("");
-    const rooms = p.spaces.map((s,i)=>{
-      const n=p.spaces.length, rw=(w-2*m)/n;
-      return `<g><rect x="${m+i*rw+4}" y="${m+4}" width="${rw-8}" height="${h-2*m-40}" rx="6" fill="var(--panel)" stroke="var(--line)"/>
-        <text x="${m+i*rw+rw/2}" y="${m+30}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">${esc(s.name)}</text>
-        <text x="${m+i*rw+rw/2}" y="${m+48}" text-anchor="middle" font-size="11" fill="var(--muted)">${s.area_sf.toLocaleString()} sf · ${esc(s.use.replace(/_/g," "))}</text></g>`;
-    }).join("");
-    const travel = p.max_travel_distance_ft ? `<path d="M ${w-m-30} ${m+70} C ${w/2} ${m+90}, ${w/2} ${h-m-50}, ${m+60} ${h-m-10}" stroke="var(--brand)" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
-      <text x="${w/2}" y="${h-m-52}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--brand)">longest travel ${p.max_travel_distance_ft} ft</text>` : "";
-    return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Simplified floor plan">
-      <rect x="${m}" y="${m}" width="${w-2*m}" height="${h-2*m}" rx="10" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
-      ${rooms}${travel}${doors}</svg><div class="stamp">${esc(p.sheets?.egress||"A-101")} · simplified</div>`;
-  }
-
-  function renderProject(){
-    const p = state[cur];
-    $("#ptitle").innerHTML = `${esc(p.name)} <small>${p.occupancy} · ${p.spaces.reduce((t,s)=>t+s.area_sf,0).toLocaleString()} sf</small>`;
-    $("#plan").innerHTML = planSVG(p);
-    const load = E.occupantLoad(p);
-    $("#facts").innerHTML = [
-      ["Occupant load", load], ["Exits", (p.exits||[]).length], ["Travel", (p.max_travel_distance_ft||"–")+" ft"]
-    ].map(([k,v])=>`<div class="fact"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
-    const doors = (p.exits||[]).map((e,i)=>`<label>Door ${esc(e.id)} clear width (in.)<input type="number" data-door="${i}" value="${e.door_clear_width_in}"></label>`).join("");
-    const acc = p.accessibility||{};
-    $("#edit").innerHTML = `
-      <label class="tog"><input type="checkbox" id="e-spr" ${p.sprinklered?"checked":""}> Sprinklered</label>
-      <label class="tog"><input type="checkbox" id="e-signs" ${(p.documented||{}).exit_signs_shown!==false?"checked":""}> Exit signs shown</label>
-      <label class="tog"><input type="checkbox" id="e-route" ${acc.accessible_route_from_parking!==false?"checked":""}> Accessible route</label>
-      <label class="tog"><input type="checkbox" id="e-wc" ${acc.accessible_restroom!==false?"checked":""}> Accessible restroom</label>
-      ${doors}
-      <label>Exit separation (ft)<input type="number" id="e-sep" value="${p.exit_separation_ft||0}"></label>
-      <label>Longest travel (ft)<input type="number" id="e-trav" value="${p.max_travel_distance_ft||0}"></label>`;
-    const sync=()=>{
-      p.sprinklered=$("#e-spr").checked;
-      p.documented=Object.assign({},p.documented,{exit_signs_shown:$("#e-signs").checked});
-      p.accessibility=Object.assign({},p.accessibility,{accessible_route_from_parking:$("#e-route").checked,accessible_restroom:$("#e-wc").checked});
-      document.querySelectorAll("[data-door]").forEach(inp=>p.exits[+inp.dataset.door].door_clear_width_in=+inp.value||0);
-      p.exit_separation_ft=+$("#e-sep").value||0; p.max_travel_distance_ft=+$("#e-trav").value||0;
-      $("#plan").innerHTML=planSVG(p);
-      $("#facts .fact:nth-child(3) .v").textContent=p.max_travel_distance_ft+" ft";
-      renderList();
-    };
-    document.querySelectorAll("#edit input").forEach(i=>i.oninput=sync);
-  }
-
-  function reset(){
-    ["s1","s2","s3"].forEach(id=>$("#"+id).classList.remove("live"));
-    ["s1n","s2n","s3n"].forEach(id=>$("#"+id).textContent="–");
-    $("#letter").innerHTML='<div class="empty">Run the review to draft the correction letter.</div>';
-    $("#log").innerHTML='<li class="empty">Nothing yet.</li>';
-    $("#held").innerHTML='<li class="empty" style="border:0;background:none">Nothing held.</li>';
-  }
-
-  const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
-  async function runReview(){
-    reset();
-    const p = state[cur]; const r = E.run(p, $("#aimix").checked);
-    $("#s1").classList.add("live"); $("#s1n").textContent=r.drafts.length; await wait(450);
-    $("#s2").classList.add("live"); $("#s2n").textContent=r.log.length;
-    $("#log").innerHTML = r.log.length? r.log.map(l=>`<li>${esc(l)}</li>`).join("") : '<li class="empty">No changes needed.</li>'; await wait(450);
-    $("#s3").classList.add("live"); $("#s3n").textContent=`${r.accepted.length} / ${r.rejected.length}`;
-    $("#held").innerHTML = r.rejected.length? r.rejected.map(x=>`<li><b>${esc(x.finding.check_id)}</b> — ${esc(x.problems.join("; "))}</li>`).join("") : '<li class="empty" style="border:0;background:none">Nothing held.</li>';
-    const today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
-    $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div></div>
-      <div class="m">${today}<br>${p.occupancy} · ${p.sprinklered?"Sprinklered":"Not sprinklered"}<br>Occupant load ${r.load}</div></div>
-      ${r.accepted.length? r.accepted.map((f,i)=>`<div class="cm"><div class="i">${i+1}</div><div>
-        <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>${f.source!=="rules"?'<span class="chip plain">AI draft</span>':""}<span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span></div>
-        <div class="t">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div></div></div>`).join("")
-      : '<div class="clean">✓ No corrections. Plans appear to comply with the items checked.</div>'}`;
-  }
-  $("#run").onclick=runReview;
-
   // ---------- QA gate ----------
   const checks=["DOOR-WIDTH","EXIT-SEP","EXITS-COUNT","EGRESS-WIDTH","STAIR-WIDTH","TRAVEL","CORRIDOR","SPRINKLER-A2","POSTING","EXIT-SIGNS","OL-DOC","ACCESSIBLE-ROUTE","ACCESSIBLE-RESTROOM","OTHER"];
   $("#g-check").innerHTML=checks.map(c=>`<option>${c}</option>`).join("");
@@ -392,9 +358,9 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
         <td>${r.missed.length?r.missed.map(s=>`<span class="pill miss">§${s}</span>`).join(" ")+(r.missed.includes("1009.1")?' <small style="color:var(--muted)">accessible means of egress, not modeled yet</small>':""):'<span class="pill okk">none</span>'}</td></tr>`).join("");
   }
 
-  renderList(); renderProject(); gateNow();
-  setTimeout(runReview, 350);
+  gateNow();
 })();
 </script>
+<script type="module" src="review.js"></script>
 </body>
 </html>

@@ -1,18 +1,20 @@
 # Plan Review Copilot
 
-Drafts building-plan correction comments, audits them like a senior plans examiner, and blocks weak ones before they reach an applicant.
+Upload plans and calcs. Claude drafts the correction comments, a senior-audit stage calibrates them, and a QA gate blocks weak ones before they reach an applicant.
+
+A personal learning project to test how AI review can be made safe, not a product.
 
 **[▶ Live demo](https://frankaburamez.github.io/plan-review-copilot/)** · runs in the browser, no install
 
 ![Plan Review Copilot demo](docs/screenshot.png)
 
-A three-stage pipeline that drafts building-plan correction comments, audits them the way a senior plans examiner would, and blocks weak comments before they reach an applicant. An evaluation harness scores it against an answer key.
-
 Built by an ICC-certified building plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
 
-**Try it in the browser:** use the live demo link above, or open [`docs/index.html`](docs/index.html) locally. Pick a project, change a door width or turn sprinklers off, and watch the three stages rerun. The browser version runs the same checks as the Python code.
+**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code basis (CBC, IBC or FBC) and disciplines, add your Claude API key, and click Generate comments. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
 
-> All projects in this repo are **fictional and synthetic**. No client, employer or jurisdiction data is used. Code sections are cited by number with paraphrased summaries; verify against the adopted code and local amendments.
+Citations outside the built-in verified library are marked "verify citation" rather than blocked, because a real review cites the whole code.
+
+> The test projects in this repo are **fictional and synthetic**. No client, employer or jurisdiction data is used. Code sections are cited by number with paraphrased summaries; verify against the adopted code and local amendments.
 
 ## Why it's built this way
 
@@ -52,7 +54,12 @@ Sample output: [`examples/p2_bistro_letter.md`](examples/p2_bistro_letter.md).
 ## Run it
 
 ```bash
-python -m unittest discover -s tests -t .          # 12 tests
+# Review real documents (needs ANTHROPIC_API_KEY or `ant auth login`)
+pip install -r requirements.txt
+python -m copilot review plans.pdf structural_calcs.pdf --code "2025 CBC" --out letter.md
+
+# Rules engine and tests (no API key needed)
+python -m unittest discover -s tests -t .          # 15 tests
 python -m copilot data/projects/p2_bistro.json      # print a correction letter
 python -m evals.run_eval --report evals/RESULTS.md  # score against the answer key
 
@@ -68,12 +75,14 @@ No dependencies are needed for the rules-only mode. Python 3.10+.
 
 ```
 copilot/rules.py         Stage 1 rules engine (each check shows its math in `evidence`)
-copilot/llm_reviewer.py  Stage 1 Claude reviewer (structured JSON output, verified sections only)
+copilot/doc_reviewer.py  Document review: plan/calc PDFs to Claude, structured comments out
+copilot/doc_review_prompt.md  The reviewer instructions (shared by the CLI and the browser)
+copilot/llm_reviewer.py  Claude reviewer for structured project records (verified sections only)
 copilot/senior_audit.py  Stage 2
 copilot/qa_gate.py       Stage 3
 copilot/code_refs.py     Verified section library and Table 1004.5 / 1017.2 values
 data/projects/           8 synthetic projects, each with an answer key
-docs/                    Browser demo (index.html + engine.js, a port of the Python pipeline)
+docs/                    Browser app (index.html, review.js for document review, engine.js = JS port of the audit and gate)
 tools/build_demo_data.py Regenerates docs/data.js from the Python sources
 evals/                   Scoring harness + QA-gate red-team cases
 ```
@@ -87,6 +96,8 @@ evals/                   Scoring harness + QA-gate red-team cases
 
 ## Limits
 
-- Inputs are structured project records, not plan PDFs. Sheet reading (OCR/vision) is out of scope here.
+- Document review reads PDFs and sheet images through Claude. One request holds about 30 MB of files; split large plan sets by discipline.
+- The rules engine and its eval use structured project records, not PDFs.
+- Document review has not yet been validated on real plan sets. The precision and recall numbers apply to the rules engine on synthetic records.
 - Covers a slice of IBC 2021 Chapters 10–11 and §903. Local amendments (for example, California CBC Chapter 11B) are not modeled.
-- Output is a draft for a licensed reviewer, not a code determination.
+- Output is a draft for a certified plans examiner, not a code determination.

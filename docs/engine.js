@@ -130,14 +130,16 @@
     // ---------- Stage 2: senior audit ----------
     const LIFE = ["903.", "1005.", "1006.", "1007.", "1017."];
     const DOCS = ["107.2.3", "1004.3"];
-    function sectionNumber(c) { const m = /§\s*([0-9]+(?:\.[0-9]+)*)/.exec(c || ""); return m ? m[1] : null; }
+    function sectionNumber(c) { const m = /§\s*([0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)/.exec(c || ""); return m ? m[1] : null; }
 
-    function audit(findings) {
+    // strict=false is document mode: unknown sections are flagged for the reviewer, not blocked.
+    function audit(findings, strict = true) {
       const log = [];
       const byKey = new Map();
       for (const f of findings) {
         const n = sectionNumber(f.section);
-        if (n === null || !isKnown(n)) { f.notes.push("UNVERIFIED_CITATION"); log.push(`${f.check_id}: citation '${f.section}' not in reference library`); }
+        if (n === null || (strict && !isKnown(n))) { f.notes.push("UNVERIFIED_CITATION"); log.push(`${f.check_id}: citation '${f.section}' not in reference library`); }
+        else if (!isKnown(n)) f.notes.push("VERIFY_CITATION");
         if (n && LIFE.some((p) => n.startsWith(p)) && f.severity !== "Critical") { log.push(`${f.check_id}: severity raised ${f.severity} -> Critical (life safety)`); f.severity = "Critical"; }
         if (DOCS.includes(n) && f.severity === "Critical") { log.push(`${f.check_id}: severity lowered Critical -> Major (documentation item)`); f.severity = "Major"; }
         const key = (n || f.section) + "|" + f.sheet;
@@ -161,7 +163,7 @@
     const QUANT = ["EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"];
 
     // Returns every rule with pass/fail so the UI can show the full checklist.
-    function gateRules(f) {
+    function gateRules(f, strict = true) {
       const text = (f.comment || "").trim();
       const n = sectionNumber(f.section);
       const low = text.toLowerCase();
@@ -169,7 +171,7 @@
       return [
         { rule: "Valid severity", ok: SEVERITIES.includes(f.severity), why: `severity '${f.severity}' is not one of Critical, Major, Minor` },
         { rule: "Has a code citation", ok: n !== null, why: "missing code citation" },
-        { rule: "Citation is in the verified library", ok: n === null || (isKnown(n) && !(f.notes || []).includes("UNVERIFIED_CITATION")), why: `citation §${n} is not in the verified reference library` },
+        ...(strict ? [{ rule: "Citation is in the verified library", ok: n === null || (isKnown(n) && !(f.notes || []).includes("UNVERIFIED_CITATION")), why: `citation §${n} is not in the verified reference library` }] : []),
         { rule: "Has a sheet reference", ok: !!(f.sheet || "").trim(), why: "missing sheet reference" },
         { rule: "Starts with an action", ok: VERBS.some((v) => text.startsWith(v)), why: "comment does not start with an action the applicant can take" },
         { rule: "Length 40-400 characters", ok: text.length >= 40 && text.length <= 400, why: `comment length ${text.length} outside 40-400 characters` },
@@ -178,14 +180,14 @@
         { rule: "Numbers behind quantitative calls", ok: !QUANT.includes(f.check_id) || /\d/.test(f.evidence || ""), why: "quantitative comment has no supporting numbers" },
       ];
     }
-    function check(f) {
+    function check(f, strict = true) {
       // Python reports "missing citation" OR "not in library", never both.
-      const rs = gateRules(f);
+      const rs = gateRules(f, strict);
       return rs.filter((r) => !r.ok).map((r) => r.why);
     }
-    function gate(findings) {
+    function gate(findings, strict = true) {
       const accepted = [], rejected = [];
-      for (const f of findings) { const p = check(f); p.length ? rejected.push({ finding: f, problems: p }) : accepted.push(f); }
+      for (const f of findings) { const p = check(f, strict); p.length ? rejected.push({ finding: f, problems: p }) : accepted.push(f); }
       return { accepted, rejected };
     }
 
@@ -237,7 +239,16 @@
       };
     }
 
-    return { run, review, audit, gate, gateRules, check, evaluate, occupantLoad, sectionNumber, cite };
+    function runDocs(raw) {
+      const drafts = (raw.comments || []).map((c, i) => ({ check_id: "C" + String(i + 1).padStart(2, "0"), discipline: c.discipline,
+        severity: c.severity, sheet: c.sheet, section: c.section, comment: c.comment, evidence: c.basis, source: "claude", notes: [] }));
+      const draftsSnapshot = JSON.parse(JSON.stringify(drafts));
+      const { audited, log } = audit(drafts, false);
+      const { accepted, rejected } = gate(audited, false);
+      return { drafts: draftsSnapshot, log, accepted, rejected };
+    }
+
+    return { run, runDocs, review, audit, gate, gateRules, check, evaluate, occupantLoad, sectionNumber, cite };
   }
 
   root.PRC = { make, SEVERITIES };

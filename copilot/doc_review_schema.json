@@ -1,0 +1,111 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "comments",
+    "not_reviewed"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "occupancy",
+        "construction_type",
+        "sprinklered",
+        "stories",
+        "building_area",
+        "scope"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "occupancy": {
+          "type": "string"
+        },
+        "construction_type": {
+          "type": "string"
+        },
+        "sprinklered": {
+          "type": "string",
+          "enum": [
+            "Yes",
+            "No",
+            "Not shown"
+          ]
+        },
+        "stories": {
+          "type": "string"
+        },
+        "building_area": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "discipline",
+          "severity",
+          "sheet",
+          "section",
+          "comment",
+          "basis"
+        ],
+        "properties": {
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "Building",
+              "Fire and Life Safety",
+              "Accessibility",
+              "Structural",
+              "Mechanical",
+              "Electrical",
+              "Plumbing",
+              "Energy",
+              "Green Building",
+              "Site and Civil",
+              "General"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "Critical",
+              "Major",
+              "Minor"
+            ]
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "not_reviewed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
