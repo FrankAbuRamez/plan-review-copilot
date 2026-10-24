@@ -59,7 +59,7 @@ flowchart LR
 
 The one miss is accessible means of egress from an upper floor (§1009.1), which the rules engine doesn't model yet. That's the kind of gap the Claude reviewer is meant to fill, and why its output still has to pass the same audit and gate. Full table: [`evals/RESULTS.md`](evals/RESULTS.md).
 
-Document review on public pre-approved ADU plan sets (Claude Sonnet 5.5): about 4 to 5 minutes and $0.50 to $0.91 per run. Two runs on the same 741 sf set found 26 of the first run's 27 issues again, and the second run added 8 more. These are public sample plans judged by a plans examiner, so they show consistency and coverage, not a measured accuracy rate.
+Document review on public pre-approved ADU plan sets (Claude Sonnet 5.5): about 4 to 5 minutes and $0.50 to $0.91 per run. Two runs on the same 741 sf set found 26 of the first run's 27 issues again, and the second run added 8 more. These are public sample plans, spot-checked against the sheets, so they show consistency and coverage, not a measured accuracy rate.
 
 How to read these numbers: the accessibility checks were added after the previous eval missed them, so P1–P6 are no longer a blind test. P7 and P8 were written afterward and score 2 of 3; the remaining miss (§1009.1) is left unmodeled on purpose. I wrote the answer keys myself, so treat this as a regression check, not a blind benchmark.
 
