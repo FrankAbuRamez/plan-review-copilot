@@ -69,7 +69,7 @@ Sample output: [`examples/p2_bistro_letter.md`](examples/p2_bistro_letter.md).
 # Review real documents (needs ANTHROPIC_API_KEY or `ant auth login`)
 pip install -r requirements.txt
 python -m copilot review plans.pdf structural_calcs.pdf --code "2025 California codes" --out letter.md
-python -m copilot review plans.pdf --code "2025 California codes" --standard-plan
+python -m copilot review plans.pdf --code "2025 California codes" --standard-plan --library my_comments.txt
 python -m copilot recheck resubmittal.pdf --previous first_letter.md --code "2025 California codes"
 
 # Rules engine and tests (no API key needed)

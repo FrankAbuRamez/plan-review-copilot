@@ -173,6 +173,11 @@ class DocumentModeTests(unittest.TestCase):
         audited, _ = senior_audit.audit([f], strict=False)
         self.assertEqual(audited[0].severity, "Major")
 
+    def test_library_block(self):
+        self.assertEqual(self.dr.library_block(["short"]), [])
+        block = self.dr.library_block(["Provide the fire separation distance to each property line on the site plan."])
+        self.assertIn("standard comments", block[0]["text"])
+
     def test_document_comment_needs_evidence(self):
         f = Finding("C03", "Building", "Major", "A-1", "2025 CRC §R302.1",
                     "Coordinate eave construction with the site plan fire separation distances.", ",")

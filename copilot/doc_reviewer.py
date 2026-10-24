@@ -95,10 +95,19 @@ def recheck(paths: list[str], previous_letter: str, code_basis: str, model: str 
     return raw, open_items, accepted, rejected, log
 
 
+def library_block(lines: list[str]) -> list[dict]:
+    """The reviewer's standard comments, used for wording when one fits (same text as the web app)."""
+    lines = [x.strip() for x in lines if len(x.strip()) > 15][:400]
+    if not lines:
+        return []
+    return [{"type": "text", "text": "The reviewer's standard comments are below. When one fits an issue you found, use its wording, "
+             "adjusted to the project. Do not add a comment just because it is in this list.\n" + "\n".join("- " + x for x in lines)}]
+
+
 def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL,
-          review_type: str = "full") -> dict:
+          review_type: str = "full", library: list[str] | None = None) -> dict:
     """Send the documents to Claude and return the parsed JSON review."""
-    content = document_blocks(paths) + [{"type": "text", "text":
+    content = document_blocks(paths) + library_block(library or []) + [{"type": "text", "text":
         "Review these documents and draft correction comments." + (f"\nReviewer notes: {notes}" if notes else "")}]
     return _call(system_prompt(code_basis, disciplines, review_type), SCHEMA, content, model)
 
@@ -113,8 +122,8 @@ def to_findings(review: dict) -> list[Finding]:
 
 
 def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = "",
-                     model: str = MODEL, review_type: str = "full"):
-    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model, review_type)
+                     model: str = MODEL, review_type: str = "full", library: list[str] | None = None):
+    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model, review_type, library)
     audited, log = senior_audit.audit(to_findings(raw), strict=False)
     accepted, rejected = qa_gate.gate(audited, strict=False)
     return raw, accepted, rejected, log
