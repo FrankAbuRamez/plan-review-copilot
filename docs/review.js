@@ -5,7 +5,8 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+e
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const MODEL = "claude-opus-5-5";
+// Sonnet is the default: about half the cost of Opus. Opus is there for harder sets.
+const MODELS = { sonnet: "claude-sonnet-5-5", opus: "claude-opus-5-5" };
 const LIMIT = 32 * 1024 * 1024 * 0.95; // request limit, measured after base64 encoding
 const DISC = ["Building", "Fire and Life Safety", "Accessibility", "Structural", "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"];
 let files = [];
@@ -106,8 +107,8 @@ async function generate() {
 
     const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true });
     const msg = await streamReview(client, {
-      model: MODEL, max_tokens: 64000, system,
-      output_config: { effort: "high", format: { type: "json_schema", schema: D.docSchema } },
+      model: MODELS[$("#model").value] || MODELS.sonnet, max_tokens: 64000, system,
+      output_config: { effort: $("#model").value === "opus" ? "high" : "medium", format: { type: "json_schema", schema: D.docSchema } },
       messages: [{ role: "user", content }],
     }, (d) => { chars += d.length; });
     clearInterval(tick);

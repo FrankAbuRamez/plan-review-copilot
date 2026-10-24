@@ -16,7 +16,7 @@ from pathlib import Path
 from . import qa_gate, senior_audit
 from .models import Finding
 
-MODEL = "claude-opus-5-5"
+MODEL = "claude-sonnet-5-5"  # lower cost; pass --model claude-opus-5-5 for a deeper review
 HERE = Path(__file__).resolve().parent
 PROMPT = (HERE / "doc_review_prompt.md").read_text(encoding="utf-8")
 SCHEMA = json.loads((HERE / "doc_review_schema.json").read_text(encoding="utf-8"))
@@ -50,7 +50,7 @@ def document_blocks(paths: list[str]) -> list[dict]:
     return blocks
 
 
-def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "") -> dict:
+def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL) -> dict:
     """Send the documents to Claude and return the parsed JSON review."""
     import anthropic
 
@@ -58,12 +58,12 @@ def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str 
     content = document_blocks(paths) + [{"type": "text", "text":
         "Review these documents and draft correction comments." + (f"\nReviewer notes: {notes}" if notes else "")}]
     with client.beta.messages.stream(
-        model=MODEL,
+        model=model,
         max_tokens=64000,
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         system=system_prompt(code_basis, disciplines),
-        output_config={"effort": "high", "format": {"type": "json_schema", "schema": SCHEMA}},
+        output_config={"effort": "high" if "opus" in model else "medium", "format": {"type": "json_schema", "schema": SCHEMA}},
         messages=[{"role": "user", "content": content}],
     ) as stream:
         message = stream.get_final_message()
@@ -84,8 +84,8 @@ def to_findings(review: dict) -> list[Finding]:
     return findings
 
 
-def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = ""):
-    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes)
+def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = "", model: str = MODEL):
+    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model)
     audited, log = senior_audit.audit(to_findings(raw), strict=False)
     accepted, rejected = qa_gate.gate(audited, strict=False)
     return raw, accepted, rejected, log

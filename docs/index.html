@@ -236,6 +236,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
     <div class="panel">
       <div class="ph"><span class="step">3</span> Claude API key</div>
       <div class="pb form">
+        <label>Model<select id="model"><option value="sonnet">Claude Sonnet 5.5 · lower cost (default)</option><option value="opus">Claude Opus 5.5 · deeper review, about 2x cost</option></select></label>
         <label>API key<input id="key" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
         <label class="inline"><input type="checkbox" id="remember"> Remember on this computer</label>
         <div class="hint">The key stays in this browser and is sent only to Anthropic. Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com/settings/keys</a>.</div>

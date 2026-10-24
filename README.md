@@ -10,7 +10,7 @@ A personal learning project to test how AI review can be made safe, not a produc
 
 Built by an ICC-certified building plans examiner who leads a 20+ engineer plan review operation, to explore how AI drafting can be made safe enough for code-compliance work.
 
-**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code basis (CBC, IBC or FBC) and disciplines, add your Claude API key, and click Generate comments. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
+**Use it in the browser:** open the live link above, drop in plan sets and calculation PDFs, pick the code basis (CBC, IBC or FBC) and disciplines, add your Claude API key, and click Generate comments. It uses Claude Sonnet 5.5 by default (lower cost), with Claude Opus 5.5 as an option for harder sets. You get a correction letter you can copy or print, plus a list of comments held for human review and anything Claude couldn't evaluate. The key goes only to Anthropic. It's saved in this browser only if you check Remember. Your files are also sent to Anthropic's API, so upload only plans you're authorized to share. Large sets may exceed per-request limits; review one discipline or one volume at a time.
 
 Citations outside the built-in verified library are marked "verify citation" rather than blocked, because a real review cites the whole code.
 

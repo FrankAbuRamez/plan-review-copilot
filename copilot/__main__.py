@@ -15,10 +15,11 @@ def review_cmd(argv: list[str]) -> None:
     parser.add_argument("--code", default="2024 IBC", help='code basis, e.g. "2025 CBC" or "2023 FBC (8th Edition)"')
     parser.add_argument("--disciplines", help="comma-separated, default: all")
     parser.add_argument("--notes", default="", help="anything the reviewer should know (scope, jurisdiction)")
+    parser.add_argument("--model", default="claude-sonnet-5-5", help="claude-sonnet-5-5 (default, lower cost) or claude-opus-5-5")
     parser.add_argument("--out", help="write the letter to this Markdown file")
     args = parser.parse_args(argv)
     disciplines = [d.strip() for d in args.disciplines.split(",")] if args.disciplines else None
-    raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes)
+    raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes, args.model)
     letter = doc_reviewer.render(raw, accepted, rejected, args.code)
     if args.out:
         Path(args.out).write_text(letter, encoding="utf-8")
