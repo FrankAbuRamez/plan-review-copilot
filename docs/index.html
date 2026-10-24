@@ -311,7 +311,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
         <label class="inline"><input type="checkbox" id="remember"> Remember on this computer</label>
         <label class="inline" title="Also sends zoomed tiles of the most text-dense sheets (schedules, notes, energy forms) so small text is readable"><input type="checkbox" id="detail"> High detail for small text (slower, about +60% cost)</label>
         <label class="inline" title="A second Claude pass re-checks Critical, held and verify-citation comments against the sheets"><input type="checkbox" id="final"> Final check on Critical and flagged comments (about +40% cost)</label>
-        <div class="hint">The key stays in this browser and is sent only to Anthropic. Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com/settings/keys</a>.</div>
+        <div class="hint">The key is sent only to Anthropic, and saved in this browser only if you check Remember. Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com/settings/keys</a>.</div>
         <button class="run" id="go" disabled>Generate comments</button>
         <div class="err" id="err" hidden></div>
       </div>
@@ -395,8 +395,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 <footer class="foot"><span>A learning project by a certified plans examiner: how AI review can be made safe enough for code-compliance work. Every comment is a draft for a reviewer to verify.</span><a href="https://github.com/FrankAbuRamez/plan-review-copilot" target="_blank" rel="noopener">Source on GitHub</a></footer>
 <div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792856145"></script>
-<script src="engine.js?v=1792856145"></script>
+<script src="data.js?v=1792856299"></script>
+<script src="engine.js?v=1792856299"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -451,6 +451,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792856145"></script>
+<script type="module" src="review.js?v=1792856299"></script>
 </body>
 </html>
