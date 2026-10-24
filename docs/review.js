@@ -176,6 +176,8 @@ $("#go").onclick = generate;
 
 // ---------- reviewer workspace ----------
 function save() { if (state) store.set("prc_last", JSON.stringify(state)); }
+const meta = () => ({ pc: $("#pc").value.trim(), rv: $("#rv").value.trim(), jx: $("#jx").value.trim() });
+["#pc", "#rv", "#jx"].forEach((s) => $(s).addEventListener("input", () => { if (state) { state.meta = meta(); save(); render(); } }));
 const order = (a, b) => (DISC_ORDER.indexOf(a.discipline) + 1 || 99) - (DISC_ORDER.indexOf(b.discipline) + 1 || 99)
   || SEV.indexOf(a.severity) - SEV.indexOf(b.severity);
 
@@ -204,12 +206,18 @@ function render() {
         <button data-ed="${idx}">Edit</button><button data-hold="${idx}">Move to held</button></div></div></div>`;
   }).join("");
   const u = state.usage;
-  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div></div>
+  const m = state.meta || {};
+  const inc = items.filter((i) => i.include);
+  const sum = SEV.map((s) => [s, inc.filter((i) => i.severity === s).length]).filter(([, c]) => c)
+    .map(([s, c]) => `<span class="${s}">${c} ${s}</span>`).join("");
+  const details = [m.jx, m.pc && `Plan check ${m.pc}`, m.rv && `Reviewer ${m.rv}`].filter(Boolean).map(esc).join(" · ");
+  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
       <div class="m">${when}<br>${esc(p.governing_code || state.code)}</div></div>
     <div class="proj">
       <div><b>Occupancy</b>${esc(p.occupancy)}</div><div><b>Construction</b>${esc(p.construction_type)}</div><div><b>Sprinklered</b>${esc(p.sprinklered)}</div>
       <div><b>Stories</b>${esc(p.stories)}</div><div><b>Area</b>${esc(p.building_area)}</div><div><b>Scope</b>${esc(p.scope)}</div>
     </div>
+    <div class="sum">${sum}<span class="plain">${inc.length} comments</span></div>
     ${cards || '<div class="clean">No comments in the letter. See "Held for human review".</div>'}
     ${u ? `<div class="meta">${MODELS[state.modelKey]?.id || ""} · ${u.secs}s · ${Math.round(u.inTok / 1000)}k tokens in, ${Math.round(u.outTok / 1000)}k out · about $${u.cost.toFixed(2)}</div>` : ""}`;
 
@@ -243,7 +251,9 @@ $("#group").onchange = render;
 // ---------- export ----------
 function plainLetter() {
   const p = state.raw.project || {};
-  const lines = ["PLAN REVIEW CORRECTIONS", p.name || "", `${p.governing_code || state.code}`, new Date(state.when).toLocaleDateString(), ""];
+  const m = state.meta || {};
+  const lines = ["PLAN REVIEW CORRECTIONS", p.name || "", m.jx || "", m.pc ? `Plan check ${m.pc}` : "", m.rv ? `Reviewer ${m.rv}` : "",
+    `${p.governing_code || state.code}`, new Date(state.when).toLocaleDateString(), ""].filter((x, i) => x || i === 7);
   let n = 0, last = "";
   for (const f of letterItems().filter((i) => i.include)) {
     if ($("#group").checked && f.discipline !== last) { lines.push("", f.discipline.toUpperCase()); last = f.discipline; }
@@ -259,7 +269,7 @@ function wordLetter() {
     body += `<p><b>${++n}. Sheet ${esc(f.sheet)} · ${esc(f.section)}</b> <i>(${f.severity})</i><br>${esc(f.comment)}</p>`;
   }
   return `<html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}h1{font-size:16pt}h3{font-size:12pt;margin-top:14pt;border-bottom:1px solid #999}</style></head>
-    <body><h1>Plan Review Corrections</h1><p><b>${esc(p.name)}</b><br>${esc(p.governing_code || state.code)}<br>${new Date(state.when).toLocaleDateString()}</p>
+    <body><h1>Plan Review Corrections</h1><p><b>${esc(p.name)}</b><br>${[state.meta?.jx, state.meta?.pc && `Plan check ${state.meta.pc}`, state.meta?.rv && `Reviewer ${state.meta.rv}`].filter(Boolean).map(esc).join("<br>")}${state.meta?.jx || state.meta?.pc || state.meta?.rv ? "<br>" : ""}${esc(p.governing_code || state.code)}<br>${new Date(state.when).toLocaleDateString()}</p>
     <p>Occupancy ${esc(p.occupancy)} · Construction ${esc(p.construction_type)} · Sprinklered ${esc(p.sprinklered)} · ${esc(p.stories)} story · ${esc(p.building_area)}</p>${body}</body></html>`;
 }
 function download(name, type, data) {
@@ -278,5 +288,8 @@ $("#json").onclick = () => download(fileBase() + "_review.json", "application/js
 $("#clear").onclick = () => { store.del("prc_last"); state = null; $("#out").hidden = true; $("#stages").hidden = true; };
 
 // Restore the last review after a refresh.
-try { const last = JSON.parse(store.get("prc_last") || "null"); if (last?.items) { state = last; render(); } } catch (e) { store.del("prc_last"); }
+try {
+  const last = JSON.parse(store.get("prc_last") || "null");
+  if (last?.items) { state = last; const m = last.meta || {}; $("#pc").value = m.pc || ""; $("#rv").value = m.rv || ""; $("#jx").value = m.jx || ""; render(); }
+} catch (e) { store.del("prc_last"); }
 refresh();

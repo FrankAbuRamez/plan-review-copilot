@@ -104,6 +104,12 @@ class DocumentModeTests(unittest.TestCase):
              "comment": "Provide panic hardware by a named manufacturer on doors serving the dining room.", "basis": ""},
         ]}
 
+    def test_article_and_chapter_citations_parse(self):
+        self.assertEqual(senior_audit.section_number("2025 CEC Article 220"), "220")
+        self.assertEqual(senior_audit.section_number("2025 CPC Chapter 7"), "7")
+        self.assertEqual(senior_audit.section_number("2025 CRC Table R602.3(1)"), "R602.3")
+        self.assertIsNone(senior_audit.section_number("see the code"))
+
     def test_cbc_section_numbers_parse(self):
         self.assertEqual(senior_audit.section_number("2025 CBC §11B-304.3"), "11B-304.3")
         self.assertEqual(senior_audit.section_number("IBC 2021 §1005.3.2"), "1005.3.2")

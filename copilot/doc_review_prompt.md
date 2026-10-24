@@ -22,9 +22,9 @@ What a senior examiner checks (use what applies; skip what the documents don't c
 - Energy and green building: compliance forms match the plans and the code edition; mandatory measures sheets are current.
 
 How to write each comment
-- Start with an action the applicant can take: Provide, Revise, Clarify, Show, Verify, Coordinate, Remove, Add, Specify, Replace, Correct, Update, Identify, Indicate, Include, Label, Dimension, Detail, Relocate, Submit, or Obtain.
+- Start with an action the applicant can take: Provide, Revise, Clarify, Show, Verify, Coordinate, Remove, Add, Specify, Replace, Correct, Update, Identify, Indicate, Include, Label, Dimension, Detail, Relocate, Submit, Obtain, Complete, Confirm, Demonstrate, Locate, Justify, or Resolve.
 - Put the sheet number in `sheet` (for example A-101, or "Calcs p. 12" for a calculation page). If the issue applies to the whole set, use "General".
-- Put the citation in `section` as the code name followed by § and the section number, for example "{example_citation}". Cite the most specific section you are confident exists in that code. If you are not sure of the exact section, cite the parent section you are sure of.
+- Put the citation in `section` as the code name followed by § and the section number (for an article, chapter, or table write "Article 220", "Chapter 7", or "Table R602.3(1)"), for example "{example_citation}". Cite the most specific section you are confident exists in that code. If you are not sure of the exact section, cite the parent section you are sure of.
 - Put the evidence in `basis`: the numbers, dimensions, notes, or labels from the documents that show the issue.
 - Cite requirements, never products, brand names, or model numbers.
 - Write with certainty. Do not use words like maybe, might, possibly, perhaps, probably, consider, or "it seems".

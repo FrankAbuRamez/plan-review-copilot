@@ -130,7 +130,7 @@
     // ---------- Stage 2: senior audit ----------
     const LIFE = ["903.", "1005.", "1006.", "1007.", "1017.", "R302.", "R310.", "R311.", "R313.", "R314.", "R315."];
     const DOCS = ["107.2.3", "1004.3"];
-    function sectionNumber(c) { const m = /§\s*([A-Z]{0,2}[0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)/.exec(c || ""); return m ? m[1] : null; }
+    function sectionNumber(c) { const m = /(?:§|\b(?:Section|Article|Chapter|Table)\s)\s*([A-Z]{0,2}[0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)/.exec(c || ""); return m ? m[1] : null; }
 
     // strict=false is document mode: unknown sections are flagged for the reviewer, not blocked.
     function audit(findings, strict = true) {
@@ -158,7 +158,8 @@
 
     // ---------- Stage 3: QA gate ----------
     const VERBS = ["Provide", "Revise", "Clarify", "Show", "Verify", "Coordinate", "Remove", "Add", "Specify", "Replace", "Correct", "Update",
-      "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain"];
+      "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain", "Complete", "Confirm",
+      "Demonstrate", "Locate", "Justify", "Resolve"];
     const HEDGES = ["maybe", "might", "possibly", "perhaps", "consider", "i think", "probably", "it seems"];
     const PRODUCTS = [/[®™]/, /\bmodel\s+[A-Z0-9-]{2,}\b/i, /\b(Simpson|Hilti|USG|Kidde|Tyco|Viking|Hager|Schlage|Von Duprin|Allegion|Owens Corning)\b/];
     const QUANT = ["EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"];

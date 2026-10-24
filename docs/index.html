@@ -138,7 +138,10 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .proj{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;font-size:13px;margin-bottom:10px}
 .proj b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .nr li{font-size:13px;margin-bottom:4px}
-.verify{background:var(--major-soft);color:var(--major)}
+.verify{background:transparent;color:var(--muted);border:1px dashed var(--line)}
+.sum{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.sum span{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px}
+.lhd{font-size:12px;color:var(--muted);margin-top:2px}
 .dh{margin:16px 0 2px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);border-bottom:2px solid var(--brand-soft);padding-bottom:4px}
 .cm.off{opacity:.45}
 .cm.off .t{text-decoration:line-through}
@@ -267,6 +270,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   <div class="out" id="out" hidden>
     <div class="letter" id="letter"></div>
     <div class="side">
+      <div class="panel"><div class="ph">Letter details</div><div class="pb form"><label>Plan check / permit number<input id="pc" placeholder="e.g. B25-0142"></label><label>Reviewer<input id="rv" placeholder="Name, certification"></label><label>Jurisdiction<input id="jx" placeholder="City or county"></label></div></div>
       <div class="panel"><div class="ph">Actions</div><div class="pb actions">
         <button id="copy">Copy letter</button><button id="word">Download Word</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button><button id="clear">Clear review</button>
         <label class="inline" style="width:100%;margin-top:6px"><input type="checkbox" id="group" checked> Group comments by discipline</label>
@@ -319,8 +323,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 </section>
 </main>
 
-<script src="data.js?v=1792853420"></script>
-<script src="engine.js?v=1792853420"></script>
+<script src="data.js?v=1792853913"></script>
+<script src="engine.js?v=1792853913"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -375,6 +379,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792853420"></script>
+<script type="module" src="review.js?v=1792853913"></script>
 </body>
 </html>
