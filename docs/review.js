@@ -302,6 +302,7 @@ async function generate() {
       : status === 429 ? "Rate limited by the API. Wait a minute and try again."
       : status === 413 ? "The files are too large for one request. Split the plan set."
       : status === 529 ? "Anthropic's API is busy right now. Try again in a few minutes."
+      : /credit balance/i.test(String(e?.message)) ? "Your Anthropic API credit balance is too low. Add credits at platform.claude.com/settings/billing, then run it again."
       : (e?.message || String(e)));
   } finally { running = false; refresh(); }
 }
