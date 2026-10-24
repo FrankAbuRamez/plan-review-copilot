@@ -14,13 +14,13 @@ from .code_refs import is_known
 
 ACTION_VERBS = ("Provide", "Revise", "Clarify", "Show", "Verify", "Coordinate", "Remove", "Add", "Specify", "Replace", "Correct", "Update",
                 "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain", "Complete", "Confirm",
-                "Demonstrate", "Locate", "Justify", "Resolve")
+                "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile")
 HEDGES = ("maybe", "might", "possibly", "perhaps", "consider", "i think", "probably", "it seems")
 # Plan reviewers cite requirements, not products. Brand or model references are
 # a common failure mode for LLM drafts, so they are blocked outright.
 PRODUCT_PATTERNS = (
     re.compile(r"[®™]"),
-    re.compile(r"\bmodel\s+[A-Z0-9-]{2,}\b", re.IGNORECASE),
+    re.compile(r"\b[Mm]odel\s+(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]+\b"),
     re.compile(r"\b(Simpson|Hilti|USG|Kidde|Tyco|Viking|Hager|Schlage|Von Duprin|Allegion|Owens Corning)\b"),
 )
 QUANTITATIVE_CHECKS = {"EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"}
@@ -33,9 +33,10 @@ def check(finding: Finding, strict: bool = True) -> list[str]:
     if finding.severity not in SEVERITIES:
         problems.append(f"severity '{finding.severity}' is not one of {SEVERITIES}")
     number = section_number(finding.section)
-    if number is None:
+    edition_cite = not strict and re.search(r"edition|effective|Title 24", finding.section, re.IGNORECASE)
+    if number is None and not edition_cite:
         problems.append("missing code citation")
-    elif (strict and not is_known(number)) or "UNVERIFIED_CITATION" in finding.notes:
+    elif number is not None and ((strict and not is_known(number)) or "UNVERIFIED_CITATION" in finding.notes):
         problems.append(f"citation §{number} is not in the verified reference library")
     if not finding.sheet.strip():
         problems.append("missing sheet reference")

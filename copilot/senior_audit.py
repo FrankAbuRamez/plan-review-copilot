@@ -34,7 +34,10 @@ def audit(findings: list[Finding], strict: bool = True) -> tuple[list[Finding], 
 
     for finding in findings:
         number = section_number(finding.section)
-        if number is None or (strict and not is_known(number)):
+        edition_cite = not strict and re.search(r"edition|effective|Title 24", finding.section, re.IGNORECASE)
+        if edition_cite and number is None:
+            finding.notes.append("VERIFY_CITATION")
+        elif number is None or (strict and not is_known(number)):
             finding.notes.append("UNVERIFIED_CITATION")
             log.append(f"{finding.check_id}: citation '{finding.section}' not in reference library")
         elif not is_known(number):

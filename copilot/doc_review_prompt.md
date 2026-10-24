@@ -32,7 +32,7 @@ Cite the code that actually governs the issue
 - Product or brand names shown on the plans are acceptable. Do not ask the applicant to remove them; only your own comments must avoid naming products.
 
 How to write each comment
-- Start with an action the applicant can take: Provide, Revise, Clarify, Show, Verify, Coordinate, Remove, Add, Specify, Replace, Correct, Update, Identify, Indicate, Include, Label, Dimension, Detail, Relocate, Submit, Obtain, Complete, Confirm, Demonstrate, Locate, Justify, or Resolve.
+- Start with an action the applicant can take: Provide, Revise, Clarify, Show, Verify, Coordinate, Remove, Add, Specify, Replace, Correct, Update, Identify, Indicate, Include, Label, Dimension, Detail, Relocate, Submit, Obtain, Complete, Confirm, Demonstrate, Locate, Justify, Resolve, or Reconcile.
 - Put the sheet number in `sheet` (for example A-101, or "Calcs p. 12" for a calculation page). If the issue applies to the whole set, use "General".
 - Put where to look in `file` and `page`: the uploaded file name and the 1-based page number in that file where the issue is clearest. Use page 0 when the issue applies to the whole set.
 - Put the citation in `section` as the code name followed by § and the section number (for an article, chapter, or table write "Article 220", "Chapter 7", or "Table R602.3(1)"), for example "{example_citation}". Cite the most specific section you are confident exists in that code. If you are not sure of the exact section, cite the parent section you are sure of.

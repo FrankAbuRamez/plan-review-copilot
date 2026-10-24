@@ -142,6 +142,20 @@ class DocumentModeTests(unittest.TestCase):
                     "Replace the web printout fastener table with the code fastening schedule.", "SNS-1 shows a web printout of the IRC table.")
         self.assertEqual(qa_gate.check(f, strict=False), [])
 
+    def test_energy_model_is_not_a_product_model(self):
+        f = Finding("C04", "Energy", "Major", "T24-2", "2025 California Energy Code §150.1",
+                    "Coordinate the energy model with the plans so the water heater and roof assembly match.",
+                    "CF1R water heater differs from the A1.0 legend.")
+        self.assertEqual(qa_gate.check(f, strict=False), [])
+
+    def test_code_edition_citation_is_allowed_in_document_mode(self):
+        f = Finding("C05", "General", "Major", "General", "2025 California Building Standards Code (Title 24), effective January 1, 2026",
+                    "Revise the governing code notes to the 2025 editions on every sheet that cites 2022.",
+                    "S2 and UT-1 cite the 2022 CRC and CGBSC.")
+        audited, _ = senior_audit.audit([f], strict=False)
+        self.assertEqual(qa_gate.check(audited[0], strict=False), [])
+        self.assertIn("VERIFY_CITATION", audited[0].notes)
+
     def test_document_comment_needs_evidence(self):
         f = Finding("C03", "Building", "Major", "A-1", "2025 CRC §R302.1",
                     "Coordinate eave construction with the site plan fire separation distances.", ",")

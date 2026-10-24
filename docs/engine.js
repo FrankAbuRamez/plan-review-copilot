@@ -138,7 +138,9 @@
       const byKey = new Map();
       for (const f of findings) {
         const n = sectionNumber(f.section);
-        if (n === null || (strict && !isKnown(n))) { f.notes.push("UNVERIFIED_CITATION"); log.push(`${f.check_id}: citation '${f.section}' not in reference library`); }
+        const editionCite = !strict && /edition|effective|Title 24/i.test(f.section || "");
+        if (editionCite && n === null) f.notes.push("VERIFY_CITATION");
+        else if (n === null || (strict && !isKnown(n))) { f.notes.push("UNVERIFIED_CITATION"); log.push(`${f.check_id}: citation '${f.section}' not in reference library`); }
         else if (!isKnown(n)) f.notes.push("VERIFY_CITATION");
         if (n && LIFE.some((p) => n.startsWith(p)) && f.severity !== "Critical") { log.push(`${f.check_id}: severity raised ${f.severity} -> Critical (life safety)`); f.severity = "Critical"; }
         if (DOCS.includes(n) && f.severity === "Critical") { log.push(`${f.check_id}: severity lowered Critical -> Major (documentation item)`); f.severity = "Major"; }
@@ -159,9 +161,9 @@
     // ---------- Stage 3: QA gate ----------
     const VERBS = ["Provide", "Revise", "Clarify", "Show", "Verify", "Coordinate", "Remove", "Add", "Specify", "Replace", "Correct", "Update",
       "Identify", "Indicate", "Include", "Label", "Dimension", "Detail", "Relocate", "Submit", "Obtain", "Complete", "Confirm",
-      "Demonstrate", "Locate", "Justify", "Resolve"];
+      "Demonstrate", "Locate", "Justify", "Resolve", "Reconcile"];
     const HEDGES = ["maybe", "might", "possibly", "perhaps", "consider", "i think", "probably", "it seems"];
-    const PRODUCTS = [/[®™]/, /\bmodel\s+[A-Z0-9-]{2,}\b/i, /\b(Simpson|Hilti|USG|Kidde|Tyco|Viking|Hager|Schlage|Von Duprin|Allegion|Owens Corning)\b/];
+    const PRODUCTS = [/[®™]/, /\b[Mm]odel\s+(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]+\b/, /\b(Simpson|Hilti|USG|Kidde|Tyco|Viking|Hager|Schlage|Von Duprin|Allegion|Owens Corning)\b/];
     const QUANT = ["EXITS-COUNT", "EXIT-SEP", "EGRESS-WIDTH", "STAIR-WIDTH", "TRAVEL", "CORRIDOR"];
 
     // Returns every rule with pass/fail so the UI can show the full checklist.
@@ -172,7 +174,7 @@
       const hedges = HEDGES.filter((h) => low.includes(h));
       return [
         { rule: "Valid severity", ok: SEVERITIES.includes(f.severity), why: `severity '${f.severity}' is not one of Critical, Major, Minor` },
-        { rule: "Has a code citation", ok: n !== null, why: "missing code citation" },
+        { rule: "Has a code citation", ok: n !== null || (!strict && /edition|effective|Title 24/i.test(f.section || "")), why: "missing code citation" },
         ...(strict ? [{ rule: "Citation is in the verified library", ok: n === null || (isKnown(n) && !(f.notes || []).includes("UNVERIFIED_CITATION")), why: `citation §${n} is not in the verified reference library` }] : []),
         { rule: "Has a sheet reference", ok: !!(f.sheet || "").trim(), why: "missing sheet reference" },
         { rule: "Starts with an action", ok: VERBS.some((v) => text.startsWith(v)), why: "comment does not start with an action the applicant can take" },
