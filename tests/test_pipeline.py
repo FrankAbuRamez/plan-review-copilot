@@ -133,5 +133,10 @@ class DocumentModeTests(unittest.TestCase):
 
     def test_replace_counts_as_an_action(self):
         f = Finding("C02", "Structural", "Minor", "SNS-1", "2025 CRC §R602.3",
-                    "Replace the web printout fastener table with the code fastening schedule.", "")
+                    "Replace the web printout fastener table with the code fastening schedule.", "SNS-1 shows a web printout of the IRC table.")
         self.assertEqual(qa_gate.check(f, strict=False), [])
+
+    def test_document_comment_needs_evidence(self):
+        f = Finding("C03", "Building", "Major", "A-1", "2025 CRC §R302.1",
+                    "Coordinate eave construction with the site plan fire separation distances.", ",")
+        self.assertIn("no evidence from the documents", qa_gate.check(f, strict=False))

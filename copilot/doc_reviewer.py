@@ -73,7 +73,7 @@ def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str 
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         system=system_prompt(code_basis, disciplines),
-        output_config={"effort": "high" if "opus" in model else "medium", "format": {"type": "json_schema", "schema": SCHEMA}},
+        output_config={"effort": "high", "format": {"type": "json_schema", "schema": SCHEMA}},
         messages=[{"role": "user", "content": content}],
     ) as stream:
         message = stream.get_final_message()

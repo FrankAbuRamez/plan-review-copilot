@@ -50,6 +50,8 @@ def check(finding: Finding, strict: bool = True) -> list[str]:
         problems.append("names a product or model instead of a requirement")
     if finding.check_id in QUANTITATIVE_CHECKS and not re.search(r"\d", finding.evidence):
         problems.append("quantitative comment has no supporting numbers")
+    if not strict and len(re.sub(r"[^A-Za-z0-9]", "", finding.evidence)) < 8:
+        problems.append("no evidence from the documents")
     return problems
 
 

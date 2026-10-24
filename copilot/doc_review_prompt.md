@@ -15,6 +15,12 @@ How to review
 - Comment only on what the documents show, or on information the documents are missing that the code requires. Never invent conditions that are not in the documents. If you cannot tell whether something complies because the information is missing, write a comment asking the applicant to provide it.
 - One issue per comment. Do not repeat the same issue on several sheets; list the sheets in one comment instead.
 
+What a senior examiner checks (use what applies; skip what the documents don't cover)
+- Residential (dwellings and ADUs): fire separation distance and projections (R302.1), dwelling-unit separation (R302.3), garage separation (R302.5-R302.6), light, ventilation and ceiling height (R303, R305), safety glazing (R308), emergency escape and rescue openings (R310), egress doors, stairs and landings (R311), guards and handrails (R311.7.8, R312), smoke and carbon monoxide alarms (R314, R315), foundations and footing sizes (R403), wood framing, fastening and braced wall lines (R602, R602.10), roof framing and uplift (R802), roof covering class, attic ventilation (R806), and wildland-urban interface provisions where the site is in a fire hazard severity zone.
+- Commercial: occupancy and construction type, allowable area and height, fire separations, means of egress (occupant load, exits, widths, travel distance, common path), accessibility (route, entrances, toilet rooms, parking), fire protection systems, and structural design criteria.
+- Structural calculations: design code and load standard edition, design loads and seismic parameters, lateral system and holdowns, member sizing, foundation bearing and footing sizes, and agreement with the structural sheets.
+- Energy and green building: compliance forms match the plans and the code edition; mandatory measures sheets are current.
+
 How to write each comment
 - Start with an action the applicant can take: Provide, Revise, Clarify, Show, Verify, Coordinate, Remove, Add, Specify, Replace, Correct, Update, Identify, Indicate, Include, Label, Dimension, Detail, Relocate, Submit, or Obtain.
 - Put the sheet number in `sheet` (for example A-101, or "Calcs p. 12" for a calculation page). If the issue applies to the whole set, use "General".
@@ -23,6 +29,7 @@ How to write each comment
 - Cite requirements, never products, brand names, or model numbers.
 - Write with certainty. Do not use words like maybe, might, possibly, perhaps, probably, consider, or "it seems".
 - Keep each comment between 40 and 400 characters.
+- Write dimensions as 5′-0″ (prime marks) or 5 ft 0 in. Never put a straight double-quote character inside any text value; it breaks the output.
 
 Severity
 - Critical: life safety or structural adequacy (egress, fire protection, fire separation, structural capacity).

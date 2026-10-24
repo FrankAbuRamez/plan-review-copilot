@@ -179,6 +179,7 @@
         { rule: "No hedging words", ok: hedges.length === 0, why: `hedging language: ${hedges.join(", ")}` },
         { rule: "No product or model names", ok: !PRODUCTS.some((r) => r.test(text)), why: "names a product or model instead of a requirement" },
         { rule: "Numbers behind quantitative calls", ok: !QUANT.includes(f.check_id) || /\d/.test(f.evidence || ""), why: "quantitative comment has no supporting numbers" },
+        ...(strict ? [] : [{ rule: "Evidence from the documents", ok: (f.evidence || "").replace(/[^A-Za-z0-9]/g, "").length >= 8, why: "no evidence from the documents" }]),
       ];
     }
     function check(f, strict = true) {

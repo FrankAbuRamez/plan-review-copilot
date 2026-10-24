@@ -139,6 +139,15 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .proj b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .nr li{font-size:13px;margin-bottom:4px}
 .verify{background:var(--major-soft);color:var(--major)}
+.dh{margin:16px 0 2px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);border-bottom:2px solid var(--brand-soft);padding-bottom:4px}
+.cm.off{opacity:.45}
+.cm.off .t{text-decoration:line-through}
+.tools{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
+.tools label{display:flex;gap:5px;align-items:center}
+.tools button{border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer}
+.t[contenteditable=true]{outline:2px solid var(--brand);border-radius:6px;padding:4px;background:var(--panel)}
+.meta{margin-top:14px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+@media print{.tools,.meta,.cm.off{display:none!important}}
 @media print{.top,.setup,.stages,.side,.disclaim,#v-gate,#v-results{display:none!important}.out{display:block!important}.letter{border:0;box-shadow:none;padding:0}body{background:#fff;zoom:1!important}}
 
 /* gate */
@@ -259,7 +268,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
     <div class="letter" id="letter"></div>
     <div class="side">
       <div class="panel"><div class="ph">Actions</div><div class="pb actions">
-        <button id="copy">Copy letter</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button>
+        <button id="copy">Copy letter</button><button id="word">Download Word</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button><button id="clear">Clear review</button>
+        <label class="inline" style="width:100%;margin-top:6px"><input type="checkbox" id="group" checked> Group comments by discipline</label>
       </div></div>
       <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held"></ul></div></div>
       <div class="panel"><div class="ph">Not reviewed</div><div class="pb"><ul class="nr" id="nr"></ul></div></div>
