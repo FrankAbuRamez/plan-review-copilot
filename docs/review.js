@@ -47,6 +47,9 @@ function setMode(m) {
 document.querySelectorAll(".mode").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
 $("#use-last").onclick = () => { if (state && state.mode !== "recheck") { $("#prev").value = plainLetter(); refresh(); } else { $("#prev").placeholder = "No earlier review saved in this browser. Paste the letter instead."; } };
 $("#prev").addEventListener("input", refresh);
+const libCount = () => { const n = $("#lib").value.split(/\n/).filter((l) => l.trim().length > 15).length; $("#lib-count").textContent = n ? `${n} standard comments saved` : ""; };
+$("#lib").value = store.get("prc_lib") || ""; libCount();
+$("#lib").addEventListener("input", () => { store.set("prc_lib", $("#lib").value); libCount(); });
 
 // ---------- files ----------
 const mb = (n) => (n / 1048576).toFixed(1) + " MB";
@@ -156,6 +159,8 @@ async function generate() {
         : { type: "image", source: { type: "base64", media_type: /\.png$/i.test(f.name) ? "image/png" : "image/jpeg", data } });
     }
     const notes = $("#notes").value.trim();
+    const lib = $("#lib").value.split(/\n/).map((l) => l.trim()).filter((l) => l.length > 15).slice(0, 400);
+    if (lib.length) content.push({ type: "text", text: "The reviewer's standard comments are below. When one fits an issue you found, use its wording, adjusted to the project. Do not add a comment just because it is in this list.\n" + lib.map((l) => "- " + l).join("\n") });
     content.push({ type: "text", text: (recheck ? "Recheck this resubmittal against the previous letter." : "Review these documents and draft correction comments.") + (notes ? `\nReviewer notes: ${notes}` : "") });
 
     const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, timeout: 20 * 60 * 1000 });
@@ -251,7 +256,7 @@ function render() {
       ${x.page > 0 ? `<button data-rcpg="${k}">📄 p.${x.page}</button>` : ""}</div>` : ""}</div></div>`).join("") + `<div class="dh">New comments</div>` : "";
   const rcSum = state.recheck ? ["Cleared", "Partly cleared", "Not cleared", "Cannot verify"].map((s) => [s, state.recheck.filter((x) => x.status === s).length])
     .filter(([, c]) => c).map(([s, c]) => `<span class="rs ${s.replace(/[^A-Za-z]/g, "")}">${c} ${s}</span>`).join("") : "";
-  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections${state.recheck ? " · Recheck" : ""}</h3><div>${esc(p.name)}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
+  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections${state.recheck ? " · Recheck" : ""}</h3><div>${esc(p.name && p.name !== "Not shown" ? p.name : "Project name not shown on the plans")}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
       <div class="m">${when}<br>${esc(p.governing_code || state.code)}</div></div>
     <div class="proj">
       <div><b>Occupancy</b>${esc(p.occupancy)}</div><div><b>Construction</b>${esc(p.construction_type)}</div><div><b>Sprinklered</b>${esc(p.sprinklered)}</div>
@@ -269,6 +274,7 @@ function render() {
       <div class="tools"><button data-back="${idx}">Move to letter</button></div></li>`;
   }).join("") : '<li class="empty" style="border:0;background:none">Nothing held.</li>';
   const ck = state.raw.checklist || [];
+  $("#ck-panel").hidden = !ck.length;
   const cnt = (s) => ck.filter((c) => c.status === s).length;
   $("#cksum").textContent = ck.length ? `${cnt("Complies")} ok · ${cnt("Not shown")} not shown · ${cnt("Noncompliant")} noncompliant` : "";
   const rank = { Noncompliant: 0, "Not shown": 1, Complies: 2, "N/A": 3 };
