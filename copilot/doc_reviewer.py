@@ -21,6 +21,8 @@ HERE = Path(__file__).resolve().parent
 PROMPT = (HERE / "doc_review_prompt.md").read_text(encoding="utf-8")
 SCHEMA = json.loads((HERE / "doc_review_schema.json").read_text(encoding="utf-8"))
 REVIEW_TYPES = json.loads((HERE / "review_types.json").read_text(encoding="utf-8"))
+RECHECK_PROMPT = (HERE / "recheck_prompt.md").read_text(encoding="utf-8")
+RECHECK_SCHEMA = json.loads((HERE / "recheck_schema.json").read_text(encoding="utf-8"))
 DISCIPLINES = ["Building", "Fire and Life Safety", "Accessibility", "Structural",
                "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"]
 MEDIA = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
@@ -62,21 +64,17 @@ def document_blocks(paths: list[str]) -> list[dict]:
     return blocks
 
 
-def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL,
-          review_type: str = "full") -> dict:
-    """Send the documents to Claude and return the parsed JSON review."""
+def _call(system: str, schema: dict, content: list[dict], model: str) -> dict:
     import anthropic
 
     client = anthropic.Anthropic()
-    content = document_blocks(paths) + [{"type": "text", "text":
-        "Review these documents and draft correction comments." + (f"\nReviewer notes: {notes}" if notes else "")}]
     with client.beta.messages.stream(
         model=model,
         max_tokens=64000,
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
-        system=system_prompt(code_basis, disciplines, review_type),
-        output_config={"effort": "high", "format": {"type": "json_schema", "schema": SCHEMA}},
+        system=system,
+        output_config={"effort": "high", "format": {"type": "json_schema", "schema": schema}},
         messages=[{"role": "user", "content": content}],
     ) as stream:
         message = stream.get_final_message()
@@ -84,8 +82,25 @@ def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str 
         raise RuntimeError("Claude declined this request; route the submittal to a human reviewer.")
     if message.stop_reason == "max_tokens":
         raise RuntimeError("The review ran out of room. Review fewer sheets or disciplines at a time.")
-    text = next(block.text for block in message.content if block.type == "text")
-    return json.loads(text)
+    return json.loads(next(block.text for block in message.content if block.type == "text"))
+
+
+def recheck(paths: list[str], previous_letter: str, code_basis: str, model: str = MODEL):
+    """Recheck a resubmittal against the previous letter. Returns (raw, open_items, accepted, rejected, log)."""
+    system = RECHECK_PROMPT.replace("{code_basis}", code_basis).replace("{previous_letter}", previous_letter)
+    raw = _call(system, RECHECK_SCHEMA, document_blocks(paths) + [{"type": "text", "text": "Recheck this resubmittal against the previous letter."}], model)
+    open_items = [x for x in raw["recheck"] if x["status"] != "Cleared"]
+    audited, log = senior_audit.audit(to_findings(raw), strict=False)
+    accepted, rejected = qa_gate.gate(audited, strict=False)
+    return raw, open_items, accepted, rejected, log
+
+
+def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL,
+          review_type: str = "full") -> dict:
+    """Send the documents to Claude and return the parsed JSON review."""
+    content = document_blocks(paths) + [{"type": "text", "text":
+        "Review these documents and draft correction comments." + (f"\nReviewer notes: {notes}" if notes else "")}]
+    return _call(system_prompt(code_basis, disciplines, review_type), SCHEMA, content, model)
 
 
 def to_findings(review: dict) -> list[Finding]:

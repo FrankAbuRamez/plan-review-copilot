@@ -1,0 +1,194 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "recheck",
+    "comments",
+    "not_reviewed"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "governing_code",
+        "occupancy",
+        "construction_type",
+        "sprinklered",
+        "stories",
+        "building_area",
+        "scope"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "governing_code": {
+          "type": "string"
+        },
+        "occupancy": {
+          "type": "string"
+        },
+        "construction_type": {
+          "type": "string"
+        },
+        "sprinklered": {
+          "type": "string",
+          "enum": [
+            "Yes",
+            "No",
+            "Not shown"
+          ]
+        },
+        "stories": {
+          "type": "string"
+        },
+        "building_area": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "recheck": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "number",
+          "original",
+          "status",
+          "sheet",
+          "evidence",
+          "follow_up",
+          "discipline",
+          "section",
+          "file",
+          "page"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer"
+          },
+          "original": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Cleared",
+              "Partly cleared",
+              "Not cleared",
+              "Cannot verify"
+            ]
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "follow_up": {
+            "type": "string"
+          },
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "Building",
+              "Fire and Life Safety",
+              "Accessibility",
+              "Structural",
+              "Mechanical",
+              "Electrical",
+              "Plumbing",
+              "Energy",
+              "Green Building",
+              "Site and Civil",
+              "General"
+            ]
+          },
+          "section": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "discipline",
+          "severity",
+          "sheet",
+          "section",
+          "comment",
+          "basis",
+          "file",
+          "page"
+        ],
+        "properties": {
+          "discipline": {
+            "type": "string",
+            "enum": [
+              "Building",
+              "Fire and Life Safety",
+              "Accessibility",
+              "Structural",
+              "Mechanical",
+              "Electrical",
+              "Plumbing",
+              "Energy",
+              "Green Building",
+              "Site and Civil",
+              "General"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "Critical",
+              "Major",
+              "Minor"
+            ]
+          },
+          "sheet": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "not_reviewed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

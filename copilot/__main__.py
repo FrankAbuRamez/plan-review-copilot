@@ -32,6 +32,23 @@ def review_cmd(argv: list[str]) -> None:
         print(letter)
 
 
+def recheck_cmd(argv: list[str]) -> None:
+    from . import doc_reviewer
+
+    parser = argparse.ArgumentParser(prog="python -m copilot recheck", description="Recheck a resubmittal against the previous letter.")
+    parser.add_argument("files", nargs="+", help="resubmitted plan / calculation PDFs or sheet images")
+    parser.add_argument("--previous", required=True, help="text or Markdown file with the previous correction letter")
+    parser.add_argument("--code", default="2024 I-Codes (IRC for dwellings, IBC for everything else)")
+    parser.add_argument("--model", default="claude-sonnet-5-5")
+    args = parser.parse_args(argv)
+    previous = Path(args.previous).read_text(encoding="utf-8")
+    raw, open_items, accepted, _rejected, _log = doc_reviewer.recheck(args.files, previous, args.code, args.model)
+    for x in raw["recheck"]:
+        print(f"{x['number']:>3}. {x['status']:<14} sheet {x['sheet']}: {x['follow_up'] or x['evidence']}")
+    print()
+    print(f"{len(open_items)} previous comments still open, {len(accepted)} new comments")
+
+
 def project_cmd(argv: list[str]) -> None:
     from .pipeline import load_project, render_letter, run
 
@@ -54,6 +71,8 @@ def main() -> None:
     argv = sys.argv[1:]
     if argv and argv[0] == "review":
         review_cmd(argv[1:])
+    elif argv and argv[0] == "recheck":
+        recheck_cmd(argv[1:])
     else:
         project_cmd(argv)
 

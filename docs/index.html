@@ -116,6 +116,17 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .empty{color:var(--muted);font-size:13px}
 .disclaim{font-size:12px;color:var(--muted);margin-top:14px}
 
+.modes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.mode{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer}
+.mode.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mode-hint{color:var(--muted);font-size:13px}
+.mini{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:650;cursor:pointer;justify-self:start}
+.rc{display:grid;grid-template-columns:34px 112px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.rc .o{color:var(--muted);font-size:13px}.rc .e{font-size:12.5px;color:var(--muted);margin-top:4px}
+.rs{font-size:11px;font-weight:800;border-radius:6px;padding:3px 6px;text-align:center;align-self:start}
+.rs.Cleared{background:var(--ok-soft);color:var(--ok)}.rs.Partlycleared{background:var(--major-soft);color:var(--major)}
+.rs.Notcleared{background:var(--crit-soft);color:var(--crit)}.rs.Cannotverify{background:var(--soft);color:var(--muted)}
+.fu{margin-top:6px;font-weight:600}
 .setup{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px}
 @media (max-width:1000px){.setup{grid-template-columns:1fr}}
 .step{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;display:inline-grid;place-items:center;font-size:13px;font-weight:800}
@@ -228,6 +239,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 <main>
 <!-- REVIEW -->
 <section class="view on" id="v-review">
+  <div class="modes"><button class="mode on" data-mode="new">New review</button><button class="mode" data-mode="recheck">Recheck a resubmittal</button><span class="mode-hint" id="mode-hint">Upload plans and calcs; get a correction letter.</span></div>
   <div class="setup">
     <div class="panel">
       <div class="ph"><span class="step">1</span> Plans and calculations</div>
@@ -260,6 +272,10 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
         <input id="code-other" placeholder="e.g. 2024 IBC with City of Austin amendments" hidden>
         <label>Review type<select id="rtype"><option value="full">Full plan review</option><option value="standard">Pre-approved / standard plan (site-specific items and deviations only)</option></select></label>
         <div class="disc" id="disc"></div>
+        <div id="recheck-box" hidden>
+          <label>Previous correction letter<textarea id="prev" placeholder="Paste the earlier correction letter here, or upload it as a PDF with the plans"></textarea></label>
+          <button type="button" class="mini" id="use-last">Use my last review from this browser</button>
+        </div>
         <label>Notes for the reviewer (optional)<textarea id="notes" placeholder="Scope, jurisdiction, anything to focus on"></textarea></label>
       </div>
     </div>
@@ -341,8 +357,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 </main>
 <div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792854213"></script>
-<script src="engine.js?v=1792854213"></script>
+<script src="data.js?v=1792854522"></script>
+<script src="engine.js?v=1792854522"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -397,6 +413,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792854213"></script>
+<script type="module" src="review.js?v=1792854522"></script>
 </body>
 </html>

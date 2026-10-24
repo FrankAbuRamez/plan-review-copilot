@@ -16,6 +16,7 @@ const DISC_ORDER = ["General", "Building", "Fire and Life Safety", "Accessibilit
 const SEV = ["Critical", "Major", "Minor"];
 let files = [];
 let running = false;
+let mode = "new"; // "new" or "recheck"
 // Current review shown on screen; also saved so a refresh doesn't lose it.
 let state = null; // { raw, code, modelKey, when, usage, log, items: [{...finding, status, include, problems}] }
 
@@ -32,6 +33,20 @@ const savedKey = store.get("prc_key");
 if (savedKey) { $("#key").value = savedKey; $("#remember").checked = true; }
 $("#key").oninput = refresh;
 $("#remember").onchange = () => { $("#remember").checked ? store.set("prc_key", $("#key").value) : store.del("prc_key"); };
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".mode").forEach((b) => b.classList.toggle("on", b.dataset.mode === m));
+  $("#recheck-box").hidden = m !== "recheck";
+  $("#disc").hidden = m === "recheck";
+  $("#rtype").closest("label").hidden = m === "recheck";
+  $("#mode-hint").textContent = m === "recheck" ? "Upload the resubmitted plans and the earlier letter; each item is marked cleared or not, and new issues are flagged." : "Upload plans and calcs; get a correction letter.";
+  $("#go").textContent = m === "recheck" ? "Run recheck" : "Generate comments";
+  refresh();
+}
+document.querySelectorAll(".mode").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+$("#use-last").onclick = () => { if (state && state.mode !== "recheck") { $("#prev").value = plainLetter(); refresh(); } else { $("#prev").placeholder = "No earlier review saved in this browser. Paste the letter instead."; } };
+$("#prev").addEventListener("input", refresh);
 
 // ---------- files ----------
 const mb = (n) => (n / 1048576).toFixed(1) + " MB";
@@ -52,7 +67,10 @@ function renderFiles() {
     : `${files.length} file(s) · ${mb(enc)} of about 30 MB`;
   refresh();
 }
-function refresh() { $("#go").disabled = running || !files.length || !$("#key").value.trim() || encoded() > LIMIT; }
+function refresh() {
+  const needLetter = mode === "recheck" && $("#prev").value.trim().length < 40 && !files.some((f) => /letter|correction|comment/i.test(f.name));
+  $("#go").disabled = running || !files.length || !$("#key").value.trim() || encoded() > LIMIT || needLetter;
+}
 $("#files").onchange = (e) => addFiles(e.target.files);
 const drop = $("#drop");
 ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
@@ -105,9 +123,13 @@ async function generate() {
   const modelKey = MODELS[$("#model").value] ? $("#model").value : "sonnet";
   const model = MODELS[modelKey];
   const rtype = D.reviewTypes[$("#rtype").value] ? $("#rtype").value : "full";
-  const system = D.docPrompt.replaceAll("{code_basis}", code).replaceAll("{disciplines}", disciplines.join(", "))
-    .replaceAll("{review_type}", D.reviewTypes[rtype])
-    .replaceAll("{example_citation}", exampleCitation(code));
+  const recheck = mode === "recheck";
+  const prev = $("#prev").value.trim() || "(The previous letter is one of the uploaded files.)";
+  const system = recheck
+    ? D.recheckPrompt.replaceAll("{code_basis}", code).replaceAll("{previous_letter}", prev)
+    : D.docPrompt.replaceAll("{code_basis}", code).replaceAll("{disciplines}", disciplines.join(", "))
+      .replaceAll("{review_type}", D.reviewTypes[rtype])
+      .replaceAll("{example_citation}", exampleCitation(code));
 
   running = true; refresh();
   $("#stages").hidden = false; $("#out").hidden = true;
@@ -134,12 +156,12 @@ async function generate() {
         : { type: "image", source: { type: "base64", media_type: /\.png$/i.test(f.name) ? "image/png" : "image/jpeg", data } });
     }
     const notes = $("#notes").value.trim();
-    content.push({ type: "text", text: "Review these documents and draft correction comments." + (notes ? `\nReviewer notes: ${notes}` : "") });
+    content.push({ type: "text", text: (recheck ? "Recheck this resubmittal against the previous letter." : "Review these documents and draft correction comments.") + (notes ? `\nReviewer notes: ${notes}` : "") });
 
     const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, timeout: 20 * 60 * 1000 });
     const msg = await streamReview(client, {
       model: model.id, max_tokens: 64000, system,
-      output_config: { effort: model.effort, format: { type: "json_schema", schema: D.docSchema } },
+      output_config: { effort: model.effort, format: { type: "json_schema", schema: recheck ? D.recheckSchema : D.docSchema } },
       messages: [{ role: "user", content }],
     }, progress);
     clearInterval(tick);
@@ -155,7 +177,14 @@ async function generate() {
     $("#s1s").textContent = `draft comments · ${usage.secs}s · about $${usage.cost.toFixed(2)}`;
     await pause(350); stage("s2", r.log.length);
     await pause(350); stage("s3", `${r.accepted.length} / ${r.rejected.length}`);
+    const rc = recheck ? (raw.recheck || []).map((x) => {
+      const open = x.status !== "Cleared" && x.follow_up && x.follow_up.trim();
+      const probs = open ? E.check({ check_id: "R" + x.number, discipline: x.discipline, severity: "Major", sheet: x.sheet,
+        section: x.section, comment: x.follow_up, evidence: x.evidence, notes: [] }, false) : [];
+      return { ...x, include: !!open, problems: probs };
+    }) : null;
     state = {
+      mode: recheck ? "recheck" : "new", recheck: rc,
       raw, code, modelKey, usage, when: new Date().toISOString(), log: r.log,
       items: r.accepted.map((f) => ({ ...f, status: "letter", include: true, problems: [] }))
         .concat(r.rejected.map((x) => ({ ...x.finding, status: "held", include: false, problems: x.problems }))),
@@ -214,13 +243,22 @@ function render() {
   const sum = SEV.map((s) => [s, inc.filter((i) => i.severity === s).length]).filter(([, c]) => c)
     .map(([s, c]) => `<span class="${s}">${c} ${s}</span>`).join("");
   const details = [m.jx, m.pc && `Plan check ${m.pc}`, m.rv && `Reviewer ${m.rv}`].filter(Boolean).map(esc).join(" · ");
-  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections</h3><div>${esc(p.name)}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
+  const rcHtml = state.recheck ? `<div class="dh">Previous comments</div>` + state.recheck.map((x, k) => `<div class="rc"><div class="i">${x.number}</div>
+      <span class="rs ${x.status.replace(/[^A-Za-z]/g, "")}">${esc(x.status)}</span><div><div class="o">${esc(x.original)}</div>
+      <div class="e">Sheet ${esc(x.sheet)} · ${esc(x.evidence)}</div>
+      ${x.follow_up ? `<div class="fu" data-rcedit="${k}">${esc(x.follow_up)}</div>${x.problems.length ? `<small style="color:var(--held)">${esc(x.problems.join("; "))}</small>` : ""}
+      <div class="tools"><label><input type="checkbox" data-rcinc="${k}" ${x.include ? "checked" : ""}> In letter</label><button data-rced="${k}">Edit</button>
+      ${x.page > 0 ? `<button data-rcpg="${k}">📄 p.${x.page}</button>` : ""}</div>` : ""}</div></div>`).join("") + `<div class="dh">New comments</div>` : "";
+  const rcSum = state.recheck ? ["Cleared", "Partly cleared", "Not cleared", "Cannot verify"].map((s) => [s, state.recheck.filter((x) => x.status === s).length])
+    .filter(([, c]) => c).map(([s, c]) => `<span class="rs ${s.replace(/[^A-Za-z]/g, "")}">${c} ${s}</span>`).join("") : "";
+  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections${state.recheck ? " · Recheck" : ""}</h3><div>${esc(p.name)}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
       <div class="m">${when}<br>${esc(p.governing_code || state.code)}</div></div>
     <div class="proj">
       <div><b>Occupancy</b>${esc(p.occupancy)}</div><div><b>Construction</b>${esc(p.construction_type)}</div><div><b>Sprinklered</b>${esc(p.sprinklered)}</div>
       <div><b>Stories</b>${esc(p.stories)}</div><div><b>Area</b>${esc(p.building_area)}</div><div><b>Scope</b>${esc(p.scope)}</div>
     </div>
-    <div class="sum">${sum}<span class="plain">${inc.length} comments</span></div>
+    <div class="sum">${rcSum}${sum}<span class="plain">${inc.length} ${state.recheck ? "new " : ""}comments</span></div>
+    ${rcHtml}
     ${cards || '<div class="clean">No comments in the letter. See "Held for human review".</div>'}
     ${u ? `<div class="meta">${MODELS[state.modelKey]?.id || ""} · ${u.secs}s · ${Math.round(u.inTok / 1000)}k tokens in, ${Math.round(u.outTok / 1000)}k out · about $${u.cost.toFixed(2)}</div>` : ""}`;
 
@@ -246,6 +284,13 @@ function render() {
 }
 
 function wire() {
+  document.querySelectorAll("[data-rcinc]").forEach((c) => (c.onchange = () => { state.recheck[+c.dataset.rcinc].include = c.checked; save(); render(); }));
+  document.querySelectorAll("[data-rcpg]").forEach((b) => (b.onclick = () => showPage(state.recheck[+b.dataset.rcpg])));
+  document.querySelectorAll("[data-rced]").forEach((b) => (b.onclick = () => {
+    const k = +b.dataset.rced, el = document.querySelector(`[data-rcedit="${k}"]`);
+    if (el.isContentEditable) { state.recheck[k].follow_up = el.innerText.trim(); el.contentEditable = "false"; save(); render(); }
+    else { el.contentEditable = "true"; el.focus(); b.textContent = "Save"; }
+  }));
   document.querySelectorAll("[data-pg]").forEach((b) => (b.onclick = () => showPage(state.items[+b.dataset.pg])));
   document.querySelectorAll("[data-inc]").forEach((c) => (c.onchange = () => { state.items[+c.dataset.inc].include = c.checked; save(); render(); }));
   document.querySelectorAll("[data-hold]").forEach((b) => (b.onclick = () => { Object.assign(state.items[+b.dataset.hold], { status: "held", include: false }); save(); render(); }));
@@ -304,6 +349,11 @@ function plainLetter() {
   const m = state.meta || {};
   const lines = ["PLAN REVIEW CORRECTIONS", p.name || "", m.jx || "", m.pc ? `Plan check ${m.pc}` : "", m.rv ? `Reviewer ${m.rv}` : "",
     `${p.governing_code || state.code}`, new Date(state.when).toLocaleDateString(), ""].filter((x, i) => x || i === 7);
+  if (state.recheck) {
+    lines.push("PREVIOUS COMMENTS NOT CLEARED");
+    for (const x of state.recheck.filter((r) => r.include)) lines.push(`${x.number}. [${x.status}] Sheet ${x.sheet}`, `   ${x.follow_up}`);
+    lines.push("", "NEW COMMENTS");
+  }
   let n = 0, last = "";
   for (const f of letterItems().filter((i) => i.include)) {
     if ($("#group").checked && f.discipline !== last) { lines.push("", f.discipline.toUpperCase()); last = f.discipline; }
@@ -314,6 +364,11 @@ function plainLetter() {
 function wordLetter() {
   const p = state.raw.project || {};
   let n = 0, last = "", body = "";
+  if (state.recheck) {
+    body += "<h3>Previous comments not cleared</h3>";
+    for (const x of state.recheck.filter((r) => r.include)) body += `<p><b>${x.number}. Sheet ${esc(x.sheet)}</b> <i>(${esc(x.status)})</i><br>${esc(x.follow_up)}</p>`;
+    body += "<h3>New comments</h3>";
+  }
   for (const f of letterItems().filter((i) => i.include)) {
     if ($("#group").checked && f.discipline !== last) { body += `<h3>${esc(f.discipline)}</h3>`; last = f.discipline; }
     body += `<p><b>${++n}. Sheet ${esc(f.sheet)} · ${esc(f.section)}</b> <i>(${f.severity})</i><br>${esc(f.comment)}</p>`;
