@@ -236,7 +236,8 @@ function render() {
     return `${head}<div class="cm ${f.include ? "" : "off"}" data-i="${idx}"><div class="i">${num}</div><div>
       <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>
       <span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span>
-      ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Outside the built-in verified library; confirm the section">verify citation</span>' : ""}
+      ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Not in the section index; confirm the section exists and applies">verify citation</span>' : ""}
+      ${f.notes.includes("INDEXED") ? `<span class="chip idx" title="${esc((E.indexLookup(f.section) || ["", ""])[1])}">✓ section</span>` : ""}
       ${f.page > 0 ? `<button class="chip pg" data-pg="${idx}" title="Open the page">📄 p.${f.page}</button>` : ""}</div>
       <div class="t" data-edit="${idx}">${esc(f.comment)}</div><div class="b">Basis: ${esc(f.evidence)}</div>
       <div class="tools"><label><input type="checkbox" data-inc="${idx}" ${f.include ? "checked" : ""}> In letter</label>

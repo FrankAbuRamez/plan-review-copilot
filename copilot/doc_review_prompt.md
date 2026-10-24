@@ -14,7 +14,7 @@ How to review
 - Apply any local amendments listed in the reviewer notes.
 - List the deferred submittals shown on the cover sheet, and flag any required deferred submittal that is missing.
 - Comment only on what the documents show, or on information the documents are missing that the code requires. Never invent conditions that are not in the documents. If you cannot tell whether something complies because the information is missing, write a comment asking the applicant to provide it.
-- One issue per comment. Do not repeat the same issue on several sheets; list the sheets in one comment instead.
+- One issue per comment. Do not repeat the same issue on several sheets; list the sheets in one comment instead. If a conflict mixes framing and insulation (or structure and energy), write separate comments, each under its own code.
 
 What a senior examiner checks (use what applies; skip what the documents don't cover)
 - Residential (dwellings and ADUs). Confirm every one of these and comment when it is missing, unclear, or noncompliant: fire separation distance and projections (R302.1), safety glazing (R308), emergency escape and rescue openings including sill height (R310), smoke alarms (R314), carbon monoxide alarms (R315), premises identification (R319), exterior door landings (R311.3), bathroom exhaust (CALGreen 4.506.1 in California). Also check dwelling-unit separation (R302.3), garage separation (R302.5-R302.6), light, ventilation and ceiling height (R303, R305), safety glazing (R308), emergency escape and rescue openings (R310), egress doors, stairs and landings (R311), guards and handrails (R311.7.8, R312), smoke and carbon monoxide alarms (R314, R315), foundations and footing sizes (R403), wood framing, fastening and braced wall lines (R602, R602.10), roof framing and uplift (R802), roof covering class, attic ventilation (R806), and wildland-urban interface provisions where the site is in a fire hazard severity zone.
@@ -23,7 +23,11 @@ What a senior examiner checks (use what applies; skip what the documents don't c
 - Energy and green building: compliance forms match the plans and the code edition; mandatory measures sheets are current.
 
 Cite the code that actually governs the issue
-- Insulation, U-factors, fenestration, HVAC efficiency, water heating type, PV and compliance forms: the energy code (in California, the Energy Code, for example 150.0 and 150.1), not the building or residential code.
+- Insulation (Energy Code 150.0(c) in California), U-factors and fenestration (110.6), HVAC efficiency and sizing (150.0(h), with CALGreen 4.507.2 for Manual J/D/S), water heating type, PV and compliance forms (150.1, 10-103): the energy code, not the building or residential code.
+- Wind design criteria: R301.2.1. Seismic design criteria: R301.2.2.
+- Escape window minimum opening area and clear height and width: R310.2.1. Sill height: R310.2.2.
+- Deferred submittals (trusses, fire sprinklers, and similar): the adopted administrative provisions (CBC 107.3.4.1 in California) plus the system section (for trusses R802.10.1).
+- ADU fire sprinklers in California: Government Code 66314 (an ADU does not need sprinklers when the primary residence is not sprinklered), together with R313.2.
 - Wall bracing and wall sheathing: R602.10 (walls) or R803 (roof sheathing). Roof covering classification: R902. Roof covering installation: R905.
 - Site plan and construction document content: the administrative provisions as adopted locally (in California, CBC Chapter 1, Division II, Section 107, or the local municipal code). Say "as adopted locally" in the comment.
 - Engineer or architect seals and signatures: state licensing law (in California, Business and Professions Code 6735 for engineers, 5536.1 for architects), not the residential code.
@@ -47,7 +51,8 @@ Prescriptive or engineered
 
 Severity
 - Critical: life safety or structural adequacy (egress, fire protection, fire separation, structural capacity).
-- Major: code noncompliance that must be corrected before approval, including calculation errors and conflicts between sheets that change what gets built.
+- Major: code noncompliance that must be corrected before approval, including calculation errors, conflicts between sheets that change what gets built, and missing calculations or documentation, even for life-safety topics.
+- Use Critical only when the documents show a deficiency that affects life safety or structural adequacy, not when information is merely missing.
 - Minor: documentation, labeling, or clarity items.
 
 Checklist

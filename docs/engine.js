@@ -127,6 +127,29 @@
       return out;
     }
 
+    // ---------- section index (document mode) ----------
+    const FAMILIES = [
+      ["statute", /Business and Professions|B&P|Government Code|Gov\.? Code/i],
+      ["calgreen", /CALGreen|Green Building/i],
+      ["energy", /Energy Code|Part 6/i],
+      ["plumbing", /\bCPC\b|Plumbing Code/i],
+      ["mechanical", /\bCMC\b|Mechanical Code/i],
+      ["electrical", /\bCEC\b|Electrical Code|\bNEC\b/i],
+      ["residential", /\bCRC\b|\bIRC\b|Residential/i],
+      ["building", /\bCBC\b|\bIBC\b|Building Code|FBC/i],
+    ];
+    const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    function indexLookup(citation) {
+      const IDX = D.sectionIndex || {};
+      for (const [fam, re] of FAMILIES) {
+        if (!re.test(citation || "")) continue;
+        const keys = Object.keys(IDX[fam] || {}).sort((a, b) => b.length - a.length);
+        for (const k of keys) if (new RegExp("(?:§|Article |Section |Table )\\s*" + reEsc(k) + "(?![0-9.])").test(citation)) return [k, IDX[fam][k]];
+        return null;
+      }
+      return null;
+    }
+
     // ---------- Stage 2: senior audit ----------
     const LIFE = ["903.", "1005.", "1006.", "1007.", "1017.", "R302.", "R310.", "R311.", "R313.", "R314.", "R315."];
     const DOCS = ["107.2.3", "1004.3"];
@@ -141,8 +164,11 @@
         const editionCite = !strict && /edition|effective|Title 24/i.test(f.section || "");
         if (editionCite && n === null) f.notes.push("VERIFY_CITATION");
         else if (n === null || (strict && !isKnown(n))) { f.notes.push("UNVERIFIED_CITATION"); log.push(`${f.check_id}: citation '${f.section}' not in reference library`); }
-        else if (!isKnown(n)) f.notes.push("VERIFY_CITATION");
-        if (n && LIFE.some((p) => n.startsWith(p)) && f.severity !== "Critical") { log.push(`${f.check_id}: severity raised ${f.severity} -> Critical (life safety)`); f.severity = "Critical"; }
+        else if (!isKnown(n)) f.notes.push(indexLookup(f.section) ? "INDEXED" : "VERIFY_CITATION");
+        if (n && LIFE.some((p) => n.startsWith(p))) {
+          const target = strict ? "Critical" : "Major";
+          if (SEVERITIES.indexOf(f.severity) > SEVERITIES.indexOf(target)) { log.push(`${f.check_id}: severity raised ${f.severity} -> ${target} (life safety)`); f.severity = target; }
+        }
         if (DOCS.includes(n) && f.severity === "Critical") { log.push(`${f.check_id}: severity lowered Critical -> Major (documentation item)`); f.severity = "Major"; }
         const key = (n || f.section) + "|" + f.sheet;
         const ex = byKey.get(key);
@@ -255,7 +281,7 @@
       return { drafts: draftsSnapshot, log, accepted, rejected };
     }
 
-    return { run, runDocs, review, audit, gate, gateRules, check, evaluate, occupantLoad, sectionNumber, cite };
+    return { run, runDocs, indexLookup, review, audit, gate, gateRules, check, evaluate, occupantLoad, sectionNumber, cite };
   }
 
   root.PRC = { make, SEVERITIES };

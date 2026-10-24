@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 
 from .code_refs import is_known
+from .section_index import lookup as index_lookup
 from .models import SEVERITIES, Finding
 
 LIFE_SAFETY_PREFIXES = ("903.", "1005.", "1006.", "1007.", "1017.",
@@ -41,11 +42,13 @@ def audit(findings: list[Finding], strict: bool = True) -> tuple[list[Finding], 
             finding.notes.append("UNVERIFIED_CITATION")
             log.append(f"{finding.check_id}: citation '{finding.section}' not in reference library")
         elif not is_known(number):
-            finding.notes.append("VERIFY_CITATION")
+            finding.notes.append("INDEXED" if index_lookup(finding.section) else "VERIFY_CITATION")
 
-        if number and number.startswith(LIFE_SAFETY_PREFIXES) and finding.severity != "Critical":
-            log.append(f"{finding.check_id}: severity raised {finding.severity} -> Critical (life safety)")
-            finding.severity = "Critical"
+        if number and number.startswith(LIFE_SAFETY_PREFIXES):
+            target = "Critical" if strict else "Major"
+            if SEVERITIES.index(finding.severity) > SEVERITIES.index(target):
+                log.append(f"{finding.check_id}: severity raised {finding.severity} -> {target} (life safety)")
+                finding.severity = target
         if number in DOCUMENTATION_SECTIONS and finding.severity == "Critical":
             log.append(f"{finding.check_id}: severity lowered Critical -> Major (documentation item)")
             finding.severity = "Major"

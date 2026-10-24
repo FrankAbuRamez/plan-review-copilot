@@ -123,7 +123,7 @@ class DocumentModeTests(unittest.TestCase):
         self.assertTrue(any("hedging" in r for r in reasons["C02"]))
         self.assertTrue(any("missing code citation" in r for r in reasons["C03"]))
         travel = next(f for f, _ in rejected if f.check_id == "C02")
-        self.assertEqual(travel.severity, "Critical")  # life-safety section raised by the senior audit
+        self.assertEqual(travel.severity, "Major")  # document mode: life-safety items are never Minor
 
     def test_prompt_fills_placeholders(self):
         text = self.dr.system_prompt("2025 California codes (CRC for dwellings and ADUs, CBC for everything else)", ["Building"])
@@ -135,7 +135,7 @@ class DocumentModeTests(unittest.TestCase):
         f = Finding("C01", "Fire and Life Safety", "Major", "A-2", "2025 CRC §R310.2.1",
                     "Provide emergency escape and rescue openings in each bedroom.", "No window schedule.")
         audited, _ = senior_audit.audit([f], strict=False)
-        self.assertEqual(audited[0].severity, "Critical")
+        self.assertEqual(audited[0].severity, "Major")
 
     def test_replace_counts_as_an_action(self):
         f = Finding("C02", "Structural", "Minor", "SNS-1", "2025 CRC §R602.3",
@@ -155,6 +155,23 @@ class DocumentModeTests(unittest.TestCase):
         audited, _ = senior_audit.audit([f], strict=False)
         self.assertEqual(qa_gate.check(audited[0], strict=False), [])
         self.assertIn("VERIFY_CITATION", audited[0].notes)
+
+    def test_section_index_marks_known_sections(self):
+        from copilot.section_index import lookup
+        self.assertEqual(lookup("2025 CRC §R310.2.1")[0], "R310.2.1")
+        self.assertEqual(lookup("2025 California Energy Code §150.1(c)14")[0], "150.1(c)14")
+        self.assertEqual(lookup("2025 CEC Article 220")[0], "220")
+        self.assertIsNone(lookup("2025 CRC §R999.9"))
+        f = Finding("C06", "Building", "Major", "A1.0", "2025 CRC §R308.4",
+                    "Identify each hazardous location requiring safety glazing on the plans.", "A1.0 note only.")
+        audited, _ = senior_audit.audit([f], strict=False)
+        self.assertIn("INDEXED", audited[0].notes)
+
+    def test_document_mode_life_safety_floor_is_major(self):
+        f = Finding("C07", "Fire and Life Safety", "Minor", "A1.0", "2025 CRC §R310.2.1",
+                    "Provide net clear opening dimensions for each bedroom escape window.", "Schedule has no net clear sizes.")
+        audited, _ = senior_audit.audit([f], strict=False)
+        self.assertEqual(audited[0].severity, "Major")
 
     def test_document_comment_needs_evidence(self):
         f = Finding("C03", "Building", "Major", "A-1", "2025 CRC §R302.1",
