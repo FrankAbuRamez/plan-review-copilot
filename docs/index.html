@@ -148,6 +148,11 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 @media (max-width:800px){.how{grid-template-columns:1fr}}
 .how div{background:var(--soft);border-radius:12px;padding:14px;font-size:14px}
 .how b{display:block;margin-bottom:4px}
+
+/* Scale up on big screens so it reads well on screen share */
+@media (min-width:1500px){body{zoom:1.2}}
+@media (min-width:1800px){body{zoom:1.35}}
+@media (min-width:2300px){body{zoom:1.6}}
 </style>
 </head>
 <body>
