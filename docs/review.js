@@ -1,7 +1,7 @@
 // Document review: plans and calcs -> Claude -> senior audit -> QA gate -> reviewer edits -> letter.
 // Runs entirely in the browser. The API key is sent only to Anthropic.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm";
-import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792896364";
+import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792898150";
 
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);
@@ -62,6 +62,66 @@ const libCount = () => { const n = $("#lib").value.split(/\n/).filter((l) => l.t
 $("#lib").value = store.get("prc_lib") || ""; libCount();
 $("#lib").addEventListener("input", () => { store.set("prc_lib", $("#lib").value); libCount(); });
 
+// Imported master comment lists (.docx or .txt). Kept in this browser; the enabled ones go with each review.
+const LIB_MAX = 700000; // characters across enabled lists, about 175k tokens
+let libs = [];
+try { libs = JSON.parse(store.get("prc_libs") || "[]"); } catch (e) { libs = []; }
+function saveLibs() {
+  try { localStorage.setItem("prc_libs", JSON.stringify(libs)); return true; } catch (e) { return false; }
+}
+function renderLibs(note) {
+  $("#libs").innerHTML = libs.map((l, i) => `<li><input type="checkbox" data-lon="${i}" ${l.on ? "checked" : ""} title="Use in this review">
+    <span title="${esc(l.name)}">${esc(l.name)}</span><small>about ${Math.round(l.text.length / 4000)}k tokens</small><button data-ldel="${i}" title="Remove">✕</button></li>`).join("")
+    + (note ? `<li style="border:0;color:var(--held)">${esc(note)}</li>` : "");
+  const on = libs.filter((l) => l.on);
+  $("#libs-on").textContent = on.length ? `· ${on.length} list${on.length > 1 ? "s" : ""} on` : "";
+  document.querySelectorAll("[data-lon]").forEach((c) => (c.onchange = () => { libs[+c.dataset.lon].on = c.checked; saveLibs(); renderLibs(); }));
+  document.querySelectorAll("[data-ldel]").forEach((b) => (b.onclick = () => { libs.splice(+b.dataset.ldel, 1); saveLibs(); renderLibs(); }));
+}
+let jszip = null;
+async function loadJsZip() {
+  if (jszip) return jszip;
+  await new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+  });
+  return (jszip = window.JSZip);
+}
+// Word paragraphs to text lines, indented by list level so sub-items stay under their parent.
+async function docxText(file) {
+  const zip = await (await loadJsZip()).loadAsync(await file.arrayBuffer());
+  const xml = await zip.file("word/document.xml").async("string");
+  const unescape = (s) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+  return (xml.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).map((p) => {
+    const text = unescape((p.match(/<w:t[^>]*>[^<]*<\/w:t>/g) || []).map((t) => t.replace(/<[^>]+>/g, "")).join(""));
+    const lvl = /<w:ilvl w:val="(\d+)"/.exec(p);
+    return text.trim() ? "  ".repeat(lvl ? +lvl[1] : 0) + text : "";
+  }).filter(Boolean).join("\n");
+}
+$("#libfile").onchange = async (e) => {
+  let note = "";
+  for (const f of e.target.files) {
+    try {
+      const text = /\.docx$/i.test(f.name) ? await docxText(f) : await f.text();
+      if (text.trim().length < 50) { note = `${f.name} has no readable text.`; continue; }
+      libs = libs.filter((l) => l.name !== f.name).concat([{ name: f.name, text, on: true }]);
+    } catch (err) { note = `Could not read ${f.name}: ${err.message || err}`; }
+  }
+  if (!saveLibs()) note = "These lists are too large to remember in this browser; they will work until you close the page.";
+  e.target.value = "";
+  renderLibs(note);
+};
+renderLibs();
+function libraryBlocks() {
+  let room = LIB_MAX;
+  return libs.filter((l) => l.on).map((l) => {
+    const text = l.text.slice(0, Math.max(0, room));
+    room -= text.length;
+    return text ? { type: "text", text: `The reviewer's master comment list "${l.name}" is below. It is the wording this office uses. When an issue you found matches a comment in it, use that wording, adjusted to the project (fill in the sheet, window, door or detail references, and drop placeholders such as ENTER TEXT or XXX). Do not add a comment just because it is in the list, and do not copy comments for conditions the documents do not show. Its section numbers may come from an older edition, so always cite the section numbers for the code basis above. Apply a jurisdiction-specific item only when the plans or the reviewer notes place the project in that jurisdiction.\n\n${text}` } : null;
+  }).filter(Boolean);
+}
+
 if (store.get("prc_guide") === "hidden") $("#guide").hidden = true;
 $("#guide-x").onclick = () => { $("#guide").hidden = true; store.set("prc_guide", "hidden"); };
 
@@ -101,12 +161,14 @@ const toBase64 = (f) => new Promise((res, rej) => {
   r.readAsDataURL(f);
 });
 
-// Same rule as copilot/doc_reviewer.py: show a residential and a building citation.
+// Same rules as copilot/doc_reviewer.py: edition-specific section numbers (the 2025 CRC renumbered Chapter 3)
+// and an example showing a residential and a building citation.
+const codeNotes = (code) => (D.codeNotes || []).find((n) => new RegExp(n.match, "i").test(code));
 function exampleCitation(code) {
   const year = code.split(" ")[0];
-  if (/California/.test(code)) return `${year} CRC §R310.2.1 for a dwelling, or ${year} CBC §1005.3.2`;
-  if (/I-Codes/.test(code)) return `${year} IRC §R310.2.1 for a dwelling, or ${year} IBC §1005.3.2`;
   if (/Florida/.test(code)) return "FBC Residential §R310.2.1 for a dwelling, or FBC Building §1005.3.2";
+  const n = codeNotes(code);
+  if (n) return n.example.replaceAll("{year}", year);
   return `${code.split("(")[0].trim()} §1005.3.2`;
 }
 
@@ -184,9 +246,11 @@ async function generate() {
   const prev = $("#prev").value.trim() || "(The previous letter is one of the uploaded files.)";
   const system = recheck
     ? D.recheckPrompt.replaceAll("{code_basis}", code).replaceAll("{previous_letter}", prev)
+      .replaceAll("{code_notes}", codeNotes(code)?.notes || "Use the section numbers of the edition named in the code basis.")
     : D.docPrompt.replaceAll("{code_basis}", code).replaceAll("{disciplines}", disciplines.join(", "))
       .replaceAll("{review_type}", D.reviewTypes[rtype])
-      .replaceAll("{example_citation}", exampleCitation(code));
+      .replaceAll("{example_citation}", exampleCitation(code))
+      .replaceAll("{code_notes}", codeNotes(code)?.notes || "Use the section numbers of the edition named in the code basis.");
 
   running = true; refresh();
   $("#stages").hidden = false; $("#out").hidden = true;
@@ -227,6 +291,7 @@ async function generate() {
     if ($("#final").checked && content.length) content[content.length - 1].cache_control = { type: "ephemeral" };
     const notes = $("#notes").value.trim();
     const lib = $("#lib").value.split(/\n/).map((l) => l.trim()).filter((l) => l.length > 15).slice(0, 400);
+    content.push(...libraryBlocks());
     if (lib.length) content.push({ type: "text", text: "The reviewer's standard comments are below. When one fits an issue you found, use its wording, adjusted to the project. Do not add a comment just because it is in this list.\n" + lib.map((l) => "- " + l).join("\n") });
     content.push({ type: "text", text: (recheck ? "Recheck this resubmittal against the previous letter." : "Review these documents and draft correction comments.") + (notes ? `\nReviewer notes: ${notes}` : "") });
 

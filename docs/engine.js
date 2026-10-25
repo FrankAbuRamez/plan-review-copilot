@@ -130,6 +130,7 @@
     // ---------- section index (document mode) ----------
     const FAMILIES = [
       ["statute", /Business and Professions|B&P|Government Code|Gov\.? Code/i],
+      ["wui", /CWUIC|Wildland-Urban Interface Code|Wildland Urban Interface Code/i],
       ["calgreen", /CALGreen|Green Building/i],
       ["energy", /Energy Code|Part 6/i],
       ["plumbing", /\bCPC\b|Plumbing Code/i],
@@ -139,19 +140,28 @@
       ["building", /\bCBC\b|\bIBC\b|Building Code|FBC/i],
     ];
     const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // The 2025 CRC (2024 IRC) renumbered Chapter 3, so residential citations are checked against the edition they name.
+    function residentialSets(citation) {
+      if (/\b(2025|2024)\b/.test(citation)) return ["residential2024"];
+      if (/\b(2022|2021|2019|2018)\b/.test(citation)) return ["residential"];
+      return ["residential2024", "residential"];
+    }
     function indexLookup(citation) {
       const IDX = D.sectionIndex || {};
       for (const [fam, re] of FAMILIES) {
         if (!re.test(citation || "")) continue;
-        const keys = Object.keys(IDX[fam] || {}).sort((a, b) => b.length - a.length);
-        for (const k of keys) if (new RegExp("(?:§|Article |Section |Table )\\s*" + reEsc(k) + "(?![0-9.])").test(citation)) return [k, IDX[fam][k]];
+        for (const set of fam === "residential" ? residentialSets(citation) : [fam]) {
+          const keys = Object.keys(IDX[set] || {}).sort((a, b) => b.length - a.length);
+          for (const k of keys) if (new RegExp("(?:§|Article |Section |Table )\\s*" + reEsc(k) + "(?![0-9.])").test(citation)) return [k, IDX[set][k]];
+        }
         return null;
       }
       return null;
     }
 
     // ---------- Stage 2: senior audit ----------
-    const LIFE = ["903.", "1005.", "1006.", "1007.", "1017.", "R302.", "R310.", "R311.", "R313.", "R314.", "R315."];
+    // Residential life safety under both numberings: 2022 CRC R310-R315, 2025 CRC R309-R311, R318, R319, R321, R324.
+    const LIFE = ["903.", "1005.", "1006.", "1007.", "1017.", "R302.", "R309.", "R310.", "R311.", "R313.", "R314.", "R315.", "R318.", "R319.", "R321.", "R324."];
     const DOCS = ["107.2.3", "1004.3"];
     function sectionNumber(c) { const m = /(?:§|\b(?:Section|Article|Chapter|Table)\s)\s*([A-Z]{0,2}[0-9]+[A-Z]?(?:[.-][0-9]+[A-Z]?)*)/.exec(c || ""); return m ? m[1] : null; }
 

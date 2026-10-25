@@ -18,6 +18,8 @@ def review_cmd(argv: list[str]) -> None:
     parser.add_argument("--notes", default="", help="anything the reviewer should know (scope, jurisdiction)")
     parser.add_argument("--model", default="claude-sonnet-5-5", help="claude-sonnet-5-5 (default, lower cost) or claude-opus-5-5")
     parser.add_argument("--library", help="text file of your standard comments, one per line")
+    parser.add_argument("--master", action="append", default=[],
+                        help="your office's master comment list (.docx or .txt); repeat for more than one")
     parser.add_argument("--standard-plan", action="store_true",
                         help="pre-approved plan set: review site-specific items and deviations only")
     parser.add_argument("--out", help="write the letter to this Markdown file")
@@ -25,7 +27,8 @@ def review_cmd(argv: list[str]) -> None:
     disciplines = [d.strip() for d in args.disciplines.split(",")] if args.disciplines else None
     raw, accepted, rejected, _log = doc_reviewer.review_documents(args.files, args.code, disciplines, args.notes, args.model,
                                                               "standard" if args.standard_plan else "full",
-                                                              Path(args.library).read_text(encoding="utf-8").splitlines() if args.library else None)
+                                                              Path(args.library).read_text(encoding="utf-8").splitlines() if args.library else None,
+                                                              args.master)
     letter = doc_reviewer.render(raw, accepted, rejected, args.code)
     if args.out:
         Path(args.out).write_text(letter, encoding="utf-8")

@@ -131,6 +131,9 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .lib summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--brand)}
 .lib textarea{width:100%;min-height:110px;margin-top:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 10px}
 .lib small{color:var(--muted)}
+.libimp{display:grid;gap:6px;margin:8px 0 4px}.libimp label.mini{display:inline-block;width:auto}
+#libs{list-style:none;margin:0;padding:0;display:grid;gap:4px}#libs li{display:flex;align-items:center;gap:8px;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+#libs li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#libs li small{white-space:nowrap}#libs li button{border:0;background:none;color:var(--muted);cursor:pointer}
 .mini{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:650;cursor:pointer;justify-self:start}
 .vt{display:flex;gap:6px;margin:-4px 0 14px}.vt button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer}
 .vt button.on{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -301,7 +304,12 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
           <button type="button" class="mini" id="use-last">Use my last review from this browser</button>
         </div>
         <label>Notes for the reviewer (optional)<textarea id="notes" placeholder="Scope, jurisdiction, local amendments, anything to focus on"></textarea></label>
-        <details class="lib"><summary>Your standard comments (optional)</summary>
+        <details class="lib" id="lib-box"><summary>Your standard comments (optional) <small id="libs-on"></small></summary>
+          <div class="libimp">
+            <label class="mini" title="A Word or text file of your office's standard correction comments, organized however you keep it">Import a master comment list (.docx or .txt)<input type="file" id="libfile" accept=".docx,.txt,.md" multiple hidden></label>
+            <ul id="libs"></ul>
+            <small>Imported lists stay in this browser and are sent only to Anthropic with a review. Turn on the lists that fit the project (for example residential for an ADU). A large list adds about $0.05 to $0.25 per review.</small>
+          </div>
           <textarea id="lib" placeholder="Paste your firm or city standard correction comments, one per line. Claude uses your wording when one fits. Saved in this browser."></textarea>
           <small id="lib-count"></small>
         </details>
@@ -399,8 +407,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 <footer class="foot"><span>A learning project by a certified plans examiner: how AI review can be made safe enough for code-compliance work. Every comment is a draft for a reviewer to verify.</span><a href="https://github.com/FrankAbuRamez/plan-review-copilot" target="_blank" rel="noopener">Source on GitHub</a></footer>
 <div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792896364"></script>
-<script src="engine.js?v=1792896364"></script>
+<script src="data.js?v=1792898150"></script>
+<script src="engine.js?v=1792898150"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -455,6 +463,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792896364"></script>
+<script type="module" src="review.js?v=1792898150"></script>
 </body>
 </html>

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from pathlib import Path
 
 from . import qa_gate, senior_audit
@@ -23,28 +24,35 @@ SCHEMA = json.loads((HERE / "doc_review_schema.json").read_text(encoding="utf-8"
 REVIEW_TYPES = json.loads((HERE / "review_types.json").read_text(encoding="utf-8"))
 RECHECK_PROMPT = (HERE / "recheck_prompt.md").read_text(encoding="utf-8")
 RECHECK_SCHEMA = json.loads((HERE / "recheck_schema.json").read_text(encoding="utf-8"))
+CODE_NOTES = json.loads((HERE / "code_notes.json").read_text(encoding="utf-8"))
 DISCIPLINES = ["Building", "Fire and Life Safety", "Accessibility", "Structural",
                "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"]
 MEDIA = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
 MAX_REQUEST_BYTES = 32 * 1024 * 1024
 
 
+def code_notes(code_basis: str) -> dict | None:
+    """Edition-specific section numbers (the 2025 CRC renumbered Chapter 3); same table as the web app."""
+    return next((n for n in CODE_NOTES if re.search(n["match"], code_basis, re.I)), None)
+
+
 def example_citation(code_basis: str) -> str:
     year = code_basis.split()[0]
-    if "California" in code_basis:
-        return f"{year} CRC §R310.2.1 for a dwelling, or {year} CBC §1005.3.2"
-    if "I-Codes" in code_basis:
-        return f"{year} IRC §R310.2.1 for a dwelling, or {year} IBC §1005.3.2"
     if "Florida" in code_basis:
         return "FBC Residential §R310.2.1 for a dwelling, or FBC Building §1005.3.2"
+    notes = code_notes(code_basis)
+    if notes:
+        return notes["example"].replace("{year}", year)
     return f"{code_basis.split('(')[0].strip()} §1005.3.2"
 
 
 def system_prompt(code_basis: str, disciplines: list[str], review_type: str = "full") -> str:
+    notes = code_notes(code_basis)
     return (PROMPT.replace("{code_basis}", code_basis)
             .replace("{review_type}", REVIEW_TYPES.get(review_type, REVIEW_TYPES["full"]))
             .replace("{disciplines}", ", ".join(disciplines))
-            .replace("{example_citation}", example_citation(code_basis)))
+            .replace("{example_citation}", example_citation(code_basis))
+            .replace("{code_notes}", notes["notes"] if notes else "Use the section numbers of the edition named in the code basis."))
 
 
 def document_blocks(paths: list[str]) -> list[dict]:
@@ -87,7 +95,9 @@ def _call(system: str, schema: dict, content: list[dict], model: str) -> dict:
 
 def recheck(paths: list[str], previous_letter: str, code_basis: str, model: str = MODEL):
     """Recheck a resubmittal against the previous letter. Returns (raw, open_items, accepted, rejected, log)."""
-    system = RECHECK_PROMPT.replace("{code_basis}", code_basis).replace("{previous_letter}", previous_letter)
+    notes = code_notes(code_basis)
+    system = (RECHECK_PROMPT.replace("{code_basis}", code_basis).replace("{previous_letter}", previous_letter)
+              .replace("{code_notes}", notes["notes"] if notes else "Use the section numbers of the edition named in the code basis."))
     raw = _call(system, RECHECK_SCHEMA, document_blocks(paths) + [{"type": "text", "text": "Recheck this resubmittal against the previous letter."}], model)
     open_items = [x for x in raw["recheck"] if x["status"] != "Cleared"]
     audited, log = senior_audit.audit(to_findings(raw), strict=False)
@@ -104,10 +114,46 @@ def library_block(lines: list[str]) -> list[dict]:
              "adjusted to the project. Do not add a comment just because it is in this list.\n" + "\n".join("- " + x for x in lines)}]
 
 
+MASTER_MAX = 700_000  # characters across master lists, about 175k tokens (same as the web app)
+
+
+def master_text(path: str) -> str:
+    """A master comment list as text: Word paragraphs indented by list level, or a plain text file."""
+    p = Path(path)
+    if p.suffix.lower() != ".docx":
+        return p.read_text(encoding="utf-8")
+    import html
+    import zipfile
+    xml = zipfile.ZipFile(p).read("word/document.xml").decode("utf-8")
+    lines = []
+    for para in re.findall(r"<w:p[ >].*?</w:p>", xml, re.S):
+        text = html.unescape("".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", para)))
+        level = re.search(r'<w:ilvl w:val="(\d+)"', para)
+        if text.strip():
+            lines.append("  " * (int(level.group(1)) if level else 0) + text)
+    return "\n".join(lines)
+
+
+def master_blocks(paths: list[str]) -> list[dict]:
+    """The reviewer's master comment lists, with the same instructions as the web app."""
+    blocks, room = [], MASTER_MAX
+    for path in paths:
+        text = master_text(path)[:max(0, room)]
+        room -= len(text)
+        if text:
+            blocks.append({"type": "text", "text": f'The reviewer\'s master comment list "{Path(path).name}" is below. It is the wording this office uses. '
+                           "When an issue you found matches a comment in it, use that wording, adjusted to the project (fill in the sheet, window, door "
+                           "or detail references, and drop placeholders such as ENTER TEXT or XXX). Do not add a comment just because it is in the list, "
+                           "and do not copy comments for conditions the documents do not show. Its section numbers may come from an older edition, so "
+                           "always cite the section numbers for the code basis above. Apply a jurisdiction-specific item only when the plans or the "
+                           f"reviewer notes place the project in that jurisdiction.\n\n{text}"})
+    return blocks
+
+
 def draft(paths: list[str], code_basis: str, disciplines: list[str], notes: str = "", model: str = MODEL,
-          review_type: str = "full", library: list[str] | None = None) -> dict:
+          review_type: str = "full", library: list[str] | None = None, masters: list[str] | None = None) -> dict:
     """Send the documents to Claude and return the parsed JSON review."""
-    content = document_blocks(paths) + library_block(library or []) + [{"type": "text", "text":
+    content = document_blocks(paths) + master_blocks(masters or []) + library_block(library or []) + [{"type": "text", "text":
         "Review these documents and draft correction comments." + (f"\nReviewer notes: {notes}" if notes else "")}]
     return _call(system_prompt(code_basis, disciplines, review_type), SCHEMA, content, model)
 
@@ -122,8 +168,9 @@ def to_findings(review: dict) -> list[Finding]:
 
 
 def review_documents(paths: list[str], code_basis: str, disciplines: list[str] | None = None, notes: str = "",
-                     model: str = MODEL, review_type: str = "full", library: list[str] | None = None):
-    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model, review_type, library)
+                     model: str = MODEL, review_type: str = "full", library: list[str] | None = None,
+                     masters: list[str] | None = None):
+    raw = draft(paths, code_basis, disciplines or DISCIPLINES, notes, model, review_type, library, masters)
     audited, log = senior_audit.audit(to_findings(raw), strict=False)
     accepted, rejected = qa_gate.gate(audited, strict=False)
     return raw, accepted, rejected, log

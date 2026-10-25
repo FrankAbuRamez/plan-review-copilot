@@ -13,8 +13,9 @@ from .code_refs import is_known
 from .section_index import lookup as index_lookup
 from .models import SEVERITIES, Finding
 
+# Residential life safety under both numberings: 2022 CRC R310-R315, 2025 CRC R309-R311, R318, R319, R321, R324.
 LIFE_SAFETY_PREFIXES = ("903.", "1005.", "1006.", "1007.", "1017.",
-                        "R302.", "R310.", "R311.", "R313.", "R314.", "R315.")  # residential code life safety
+                        "R302.", "R309.", "R310.", "R311.", "R313.", "R314.", "R315.", "R318.", "R319.", "R321.", "R324.")
 DOCUMENTATION_SECTIONS = ("107.2.3", "1004.3")
 # Accepts IBC-style (1005.3.2), CBC-style (11B-404.2.3) and IRC/CRC-style (R302.1, N1102.1) section numbers.
 # Also accepts "Article 220", "Chapter 7", "Table R602.3(1)" and "Section 1005.3" written without the § sign.

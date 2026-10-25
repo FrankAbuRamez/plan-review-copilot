@@ -3,9 +3,12 @@ Review type: {review_type}
 
 Pick the governing code first
 - Detached one- and two-family dwellings, accessory dwelling units (ADUs), and townhouses within the residential code's scope (not more than three stories above grade plane) are reviewed under the residential code: CRC in California, IRC under the I-Codes, FBC Residential in Florida. Everything else is reviewed under the building code: CBC, IBC, or FBC Building.
-- Cite the residential code for dwelling items (for example fire separation R302, emergency escape and rescue openings R310, smoke alarms R314, wall bracing R602.10). Cite the building code only where the residential code sends you there or the item is outside its scope.
+- Cite the residential code for dwelling items (fire separation, escape openings, smoke alarms, wall bracing and so on). Cite the building code only where the residential code sends you there or the item is outside its scope.
 - Mechanical, plumbing, electrical, energy, and green building items cite their own codes (for California: CMC, CPC, CEC, California Energy Code, CALGreen).
 - Put the governing code you used in `project.governing_code`, with one short reason.
+
+Section numbers for this edition
+{code_notes}
 
 How to review
 - Read every sheet and every calculation page before you write anything. Use the code analysis, title sheets, and schedules to establish occupancy, construction type, sprinkler status, building area, stories, and scope.
@@ -17,7 +20,7 @@ How to review
 - One issue per comment. Do not repeat the same issue on several sheets; list the sheets in one comment instead. If a conflict mixes framing and insulation (or structure and energy), write separate comments, each under its own code.
 
 What a senior examiner checks (use what applies; skip what the documents don't cover)
-- Residential (dwellings and ADUs). Confirm every one of these and comment when it is missing, unclear, or noncompliant: fire separation distance and projections (R302.1), safety glazing (R308), emergency escape and rescue openings including sill height (R310), smoke alarms (R314), carbon monoxide alarms (R315), premises identification (R319), exterior door landings (R311.3), bathroom exhaust (CALGreen 4.506.1 in California). Also check dwelling-unit separation (R302.3), garage separation (R302.5-R302.6), light, ventilation and ceiling height (R303, R305), safety glazing (R308), emergency escape and rescue openings (R310), egress doors, stairs and landings (R311), guards and handrails (R311.7.8, R312), smoke and carbon monoxide alarms (R314, R315), foundations and footing sizes (R403), wood framing, fastening and braced wall lines (R602, R602.10), roof framing and uplift (R802), roof covering class, attic ventilation (R806), and wildland-urban interface provisions where the site is in a fire hazard severity zone.
+- Residential (dwellings and ADUs). Confirm every one of these and comment when it is missing, unclear, or noncompliant: fire separation distance and projections (R302.1), safety glazing, emergency escape and rescue openings including sill height, smoke alarms, carbon monoxide alarms, premises identification, exterior door landings, bathroom exhaust (CALGreen 4.506.1 in California). Also check dwelling-unit and ADU separation (R302.3), garage separation (R302.5-R302.6), light, ventilation, heating and ceiling height, egress doors, stairs, handrails and landings, guards and window fall protection, aging-in-place reinforcement and door widths (California), foundations and footing sizes (R403), wood framing, fastening and braced wall lines (R602, R602.10), roof framing and uplift (R802), roof covering class, attic ventilation (R806), and wildland-urban interface provisions where the site is in a fire hazard severity zone. Use the section numbers listed above for this edition.
 - Commercial: occupancy and construction type, allowable area and height, fire separations, means of egress (occupant load, exits, widths, travel distance, common path), accessibility (route, entrances, toilet rooms, parking), fire protection systems, and structural design criteria.
 - Structural calculations: design code and load standard edition, design loads and seismic parameters, lateral system and holdowns, member sizing, foundation bearing and footing sizes, and agreement with the structural sheets.
 - Energy and green building: compliance forms match the plans and the code edition; mandatory measures sheets are current.
@@ -28,9 +31,9 @@ What a senior examiner checks (use what applies; skip what the documents don't c
 Cite the code that actually governs the issue
 - Insulation (Energy Code 150.0(c) in California), U-factors and fenestration (110.6), HVAC efficiency and sizing (150.0(h), with CALGreen 4.507.2 for Manual J/D/S), water heating type, PV and compliance forms (150.1, 10-103): the energy code, not the building or residential code.
 - Wind design criteria: R301.2.1. Seismic design criteria: R301.2.2.
-- Escape window minimum opening area and clear height and width: R310.2.1. Sill height: R310.2.2.
+- Escape window opening size, clear dimensions and sill height: the escape-opening subsections listed above for this edition.
 - Deferred submittals (trusses, fire sprinklers, and similar): the adopted administrative provisions (CBC 107.3.4.1 in California) plus the system section (for trusses R802.10.1).
-- ADU fire sprinklers in California: Government Code 66314 (an ADU does not need sprinklers when the primary residence is not sprinklered), together with R313.2.
+- ADU fire sprinklers in California: Government Code 66314 (an ADU does not need sprinklers when the primary residence is not sprinklered), together with the one- and two-family dwelling sprinkler section listed above.
 - Wall bracing and wall sheathing: R602.10 (walls) or R803 (roof sheathing). Roof covering classification: R902. Roof covering installation: R905.
 - Site plan and construction document content: the administrative provisions as adopted locally (in California, CBC Chapter 1, Division II, Section 107, or the local municipal code). Say "as adopted locally" in the comment.
 - Engineer or architect seals and signatures: state licensing law (in California, Business and Professions Code 6735 for engineers, 5536.1 for architects), not the residential code.
@@ -61,7 +64,7 @@ Severity
 - Minor: documentation, labeling, or clarity items.
 
 Checklist
-- Fill `checklist` with every mandatory item for the governing code. For dwellings and ADUs: fire separation distance (R302.1), safety glazing (R308), emergency escape and rescue openings (R310), smoke alarms (R314), carbon monoxide alarms (R315), automatic sprinklers (R313; in California, an ADU does not need sprinklers when the primary dwelling is not sprinklered, so say which applies), egress door and landings (R311), attic access (R807), premises identification (R319), bathroom exhaust, and wildland-urban interface where applicable. For other buildings: occupancy, construction type, allowable area and height, means of egress, accessibility, fire protection systems, and structural design criteria.
+- Fill `checklist` with every mandatory item for the governing code, citing the section numbers listed above for this edition. For dwellings and ADUs: fire separation distance (R302.1), safety glazing, emergency escape and rescue openings, smoke alarms, carbon monoxide alarms, automatic sprinklers (in California, an ADU does not need sprinklers when the primary dwelling is not sprinklered, so say which applies), egress door and landings, attic access (R807), premises identification, bathroom exhaust, aging-in-place (California), and wildland-urban interface where applicable. For other buildings: occupancy, construction type, allowable area and height, means of egress, accessibility, fire protection systems, and structural design criteria.
 - Mark each item Complies, Not shown, Noncompliant, or N/A, with the sheet and a short note. Every item marked Not shown or Noncompliant must also have a comment.
 
 Also report

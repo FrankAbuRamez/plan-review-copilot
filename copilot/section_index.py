@@ -15,6 +15,7 @@ INDEX = {k: v for k, v in json.loads((Path(__file__).with_name("section_index.js
 
 FAMILIES = [
     ("statute", re.compile(r"Business and Professions|B&P|Government Code|Gov\.? Code", re.I)),
+    ("wui", re.compile(r"CWUIC|Wildland-Urban Interface Code|Wildland Urban Interface Code", re.I)),
     ("calgreen", re.compile(r"CALGreen|Green Building", re.I)),
     ("energy", re.compile(r"Energy Code|Part 6", re.I)),
     ("plumbing", re.compile(r"\bCPC\b|Plumbing Code", re.I)),
@@ -25,13 +26,23 @@ FAMILIES = [
 ]
 
 
+def residential_sets(citation: str) -> list[str]:
+    """The 2025 CRC (2024 IRC) renumbered Chapter 3, so check the edition the citation names."""
+    if re.search(r"\b(2025|2024)\b", citation):
+        return ["residential2024"]
+    if re.search(r"\b(2022|2021|2019|2018)\b", citation):
+        return ["residential"]
+    return ["residential2024", "residential"]
+
+
 def lookup(citation: str) -> tuple[str, str] | None:
     """Return (section, title) when the citation matches a known section, else None."""
     for family, pattern in FAMILIES:
         if not pattern.search(citation):
             continue
-        for section in sorted(INDEX[family], key=len, reverse=True):
-            if re.search(r"(?:§|Article |Section |Table )\s*" + re.escape(section) + r"(?![0-9.])", citation):
-                return section, INDEX[family][section]
+        for name in residential_sets(citation) if family == "residential" else [family]:
+            for section in sorted(INDEX[name], key=len, reverse=True):
+                if re.search(r"(?:§|Article |Section |Table )\s*" + re.escape(section) + r"(?![0-9.])", citation):
+                    return section, INDEX[name][section]
         return None
     return None

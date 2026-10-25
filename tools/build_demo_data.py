@@ -22,6 +22,7 @@ data = {
     "reviewTypes": json.loads((ROOT / "copilot" / "review_types.json").read_text(encoding="utf-8")),
     "recheckPrompt": (ROOT / "copilot" / "recheck_prompt.md").read_text(encoding="utf-8"),
     "recheckSchema": json.loads((ROOT / "copilot" / "recheck_schema.json").read_text(encoding="utf-8")),
+    "codeNotes": json.loads((ROOT / "copilot" / "code_notes.json").read_text(encoding="utf-8")),
     "sectionIndex": {k: v for k, v in json.loads((ROOT / "copilot" / "section_index.json").read_text(encoding="utf-8")).items() if not k.startswith("_")},
 }
 out = ROOT / "docs" / "data.js"
