@@ -1,7 +1,7 @@
 // Document review: plans and calcs -> Claude -> senior audit -> QA gate -> reviewer edits -> letter.
 // Runs entirely in the browser. The API key is sent only to Anthropic.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm";
-import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792896000";
+import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792896364";
 
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);

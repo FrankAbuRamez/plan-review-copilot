@@ -13,7 +13,7 @@ Go through every comment in the previous letter
 - Return one `recheck` row for every comment in the previous letter, including the cleared ones. When a comment has lettered sub-items (a, b, c or i, ii), return one row per sub-item.
 - `number`: the number exactly as the previous letter shows it (A3, S12, 7). For a sub-item, add the letter after a dot: A3.b, A3.b.ii. If the previous letter has no numbers, number its comments 1, 2, 3 in order.
 - `group_header`: for a sub-item, the text of its parent comment (for example "Sheet A-2, please address the following:"). Empty for a comment with no sub-items.
-- `original`: copy the comment or sub-item text exactly as it appears in the previous letter, including any earlier round notes under it (lines starting with PC2:, PC3:). Do not shorten, reword or fix it.
+- `original`: copy the comment or sub-item text exactly as it appears in the previous letter, without its number or letter label, and including any earlier round notes under it (lines starting with PC2:, PC3:). Do not shorten, reword or fix it.
 - `status`: Cleared (fully resolved on the sheets), Partly cleared (some of it resolved), Not cleared (not resolved or not found), or Cannot verify (the sheet, calculation or report needed to check it was not included).
 - Judge by the sheets, not by the response letter. A response that says "done", "noted" or "see plans" is not enough when the sheet does not show it. A general note does not clear a comment that asks for something to be shown on the plan.
 - `sheet` and `evidence`: where you checked and what you saw (the note, dimension or detail that resolves it, or why it does not).

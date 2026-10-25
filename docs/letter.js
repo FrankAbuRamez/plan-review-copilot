@@ -120,10 +120,12 @@ export function buildLetter(state, fileOrder = state.fileOrder || []) {
       const sub = num.slice(parent.length).replace(/^[.\s(]+|\)$/g, "");
       let item = sec.items.find((it) => it.num === parent);
       if (!item) { item = { num: parent, carried: true, header: "", text: "", notes: [], subs: [] }; sec.items.push(item); }
+      // The model sometimes copies the number or letter label into the text; the letter adds its own.
+      const original = String(x.original || "").replace(/^\s*(?:[A-Z]{0,2}\d+(?:\.[a-z0-9]+)*\.?|\(?[a-z]{1,4}\))\s+/i, "");
       if (sub) {
-        if (!item.header) item.header = String(x.group_header || "").trim();
-        item.subs.push({ label: sub, text: x.original, notes: [note], rc: k });
-      } else { item.text = x.original; item.notes.push(note); item.rc = k; }
+        if (!item.header) item.header = String(x.group_header || "").trim().replace(/^\s*[A-Z]{0,2}\d+\.\s+/, "");
+        item.subs.push({ label: sub.split(".").pop(), text: original, notes: [note], rc: k });
+      } else { item.text = original; item.notes.push(note); item.rc = k; }
       labels.set("rc" + k, num);
     });
   }

@@ -44,7 +44,7 @@ const re = {
   ...state, round: roundFrom(txt), items: [f("Building", "A-3", 7, "Show the new skylight's listing on the roof plan.", "2025 CRC §R308.6")],
   recheck: [
     { number: "A1", group_header: "", original: "Provide the designer's signature on every sheet. B&P Code 5536.1.", status: "Cleared", follow_up: "", discipline: "General", include: false },
-    { number: "A3.a", group_header: "Sheet A-2, please address the following:", original: "Provide the 36 in. landing at the rear door. CRC R311.3.", status: "Not cleared", follow_up: "Show the landing on the floor plan; a general note is not enough. Comment remains.", discipline: "Building", include: true },
+    { number: "A3.a", group_header: "Sheet A-2, please address the following:", original: "a) Provide the 36 in. landing at the rear door. CRC R311.3.", status: "Not cleared", follow_up: "Show the landing on the floor plan; a general note is not enough. Comment remains.", discipline: "Building", include: true },
     { number: "A3.b", group_header: "Sheet A-2, please address the following:", original: "Show tempered glazing at window C. CRC R308.4.2.", status: "Cleared", follow_up: "", discipline: "Building", include: false },
     { number: "S1.b", group_header: "Structural calculations, please address the following:", original: "Page 12 – Revise the header.", status: "Partly cleared", follow_up: "Thank you for revising the header. Provide the post below it as well.", discipline: "Structural", include: true },
     { number: "T1", group_header: "", original: "Sheet A-1 – List the HERS features.", status: "Cleared", follow_up: "", discipline: "Energy", include: false },
