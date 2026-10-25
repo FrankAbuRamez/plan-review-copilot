@@ -21,7 +21,7 @@ const sectionIndex = (key) => SECTIONS.findIndex(([k]) => k === key);
 
 // "2025 CRC §R311.3" -> "CRC R311.3"
 export function cite(section) {
-  return String(section || "").replace(/^\s*\d{4}\s+/, "").replace(/§\s*/g, "").replace(/\s+/g, " ").trim();
+  return String(section || "").replace(/(^|[;,]\s*)\d{4}\s+(?=[A-Z])/g, "$1").replace(/§\s*/g, "").replace(/\s+/g, " ").trim();
 }
 
 // Comment text with the citation at the end, unless the comment already names that section.
@@ -62,15 +62,20 @@ export function sortItems(items, fileOrder = []) {
     || String(a.sheet).localeCompare(String(b.sheet), undefined, { numeric: true }));
 }
 
-// Turn sorted comments of one section into numbered letter items.
+// Turn sorted comments of one section into numbered letter items: one item per sheet
+// (in order of the sheet's first appearance), and one item per whole-set comment.
 function numberSection(list, prefix, start, labels) {
+  const groups = [], byKey = new Map();
+  for (const g of list) {
+    const key = sheetKey(g.f);
+    if (!key) { groups.push([g]); continue; }
+    if (!byKey.has(key)) { byKey.set(key, []); groups.push(byKey.get(key)); }
+    byKey.get(key).push(g);
+  }
   const out = [];
   let n = start;
-  for (let i = 0; i < list.length;) {
-    const f = list[i].f, key = sheetKey(f);
-    let j = i + 1;
-    if (key) while (j < list.length && sheetKey(list[j].f) === key) j++;
-    const group = list.slice(i, j);
+  for (const group of groups) {
+    const key = sheetKey(group[0].f);
     const num = prefix + n++;
     if (group.length === 1) {
       const g = group[0];
@@ -87,7 +92,6 @@ function numberSection(list, prefix, start, labels) {
       });
       out.push({ num, header, subs });
     }
-    i = j;
   }
   return out;
 }
