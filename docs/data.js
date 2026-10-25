@@ -1170,7 +1170,22 @@ window.PRC_DATA = {
    "R806.2": "Minimum vent area",
    "R807.1": "Attic access",
    "R902.1": "Roof covering fire classification",
-   "R905.1": "Roof covering application"
+   "R905.1": "Roof covering application",
+   "R106.1.1": "Information on construction documents",
+   "R106.3.3": "Deferred submittals (as adopted)",
+   "R302": "Fire-resistant construction",
+   "R303": "Light, ventilation and heating",
+   "R308": "Glazing",
+   "R309": "Garages and carports",
+   "R310": "Emergency escape and rescue openings",
+   "R311": "Means of egress",
+   "R312": "Guards and window fall protection",
+   "R313": "Automatic fire sprinkler systems",
+   "R314": "Smoke alarms",
+   "R315": "Carbon monoxide alarms",
+   "R319": "Site address",
+   "R327": "Aging-in-place design (California)",
+   "R337": "Exterior wildfire exposure"
   },
   "calgreen": {
    "301.1": "Scope (application of the code)",
@@ -1331,7 +1346,26 @@ window.PRC_DATA = {
    "R806.2": "Minimum vent area",
    "R807.1": "Attic access",
    "R902.1": "Roof covering fire classification",
-   "R905.1": "Roof covering application"
+   "R905.1": "Roof covering application",
+   "R106.1.1": "Information on construction documents",
+   "R106.3.3": "Deferred submittals (as adopted)",
+   "R302": "Fire-resistant construction",
+   "R308": "Site address",
+   "R309": "Automatic sprinkler systems",
+   "R310": "Smoke alarms",
+   "R311": "Carbon monoxide alarms",
+   "R312": "Minimum room areas",
+   "R313": "Ceiling height",
+   "R317": "Garages and carports",
+   "R318": "Means of egress",
+   "R319": "Emergency escape and rescue openings",
+   "R320": "Handrails",
+   "R321": "Guards and window fall protection",
+   "R324": "Glazing",
+   "R325": "Light, ventilation and heating",
+   "R327": "Toilet, bath and shower spaces",
+   "R328": "Aging-in-place design and fall prevention",
+   "R337": "Exterior wildfire exposure (applies the CWUIC)"
   },
   "wui": {
    "402.3": "Existing conditions (address markers, road markings)",
@@ -1368,7 +1402,8 @@ window.PRC_DATA = {
    "507.1": "Roof covering replacement or repair",
    "603": "Vegetation management",
    "605.1": "Spark arrestors",
-   "606.3": "LP-gas tank clearance"
+   "606.3": "LP-gas tank clearance",
+   "504": "Construction methods and materials (Chapter 5)"
   }
  }
 };
