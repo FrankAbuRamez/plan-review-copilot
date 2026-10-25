@@ -144,7 +144,9 @@ def master_blocks(paths: list[str]) -> list[dict]:
             blocks.append({"type": "text", "text": f'The reviewer\'s master comment list "{Path(path).name}" is below. It is the wording this office uses. '
                            "When an issue you found matches a comment in it, use that wording, adjusted to the project (fill in the sheet, window, door "
                            "or detail references, and drop placeholders such as ENTER TEXT or XXX). Do not add a comment just because it is in the list, "
-                           "and do not copy comments for conditions the documents do not show. Its section numbers may come from an older edition, so "
+                           "and do not copy comments for conditions the documents do not show. When a standard comment lists several sub-items, keep "
+                           "only the ones that apply and keep each comment under 400 characters; split it into separate comments when needed. "
+                           "Its section numbers may come from an older edition, so "
                            "always cite the section numbers for the code basis above. Apply a jurisdiction-specific item only when the plans or the "
                            f"reviewer notes place the project in that jurisdiction.\n\n{text}"})
     return blocks
