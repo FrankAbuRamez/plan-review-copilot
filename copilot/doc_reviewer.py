@@ -78,7 +78,7 @@ def _call(system: str, schema: dict, content: list[dict], model: str) -> dict:
     client = anthropic.Anthropic()
     with client.beta.messages.stream(
         model=model,
-        max_tokens=64000,
+        max_tokens=128000,  # Sonnet and Opus 5.5 allow 128K output; a master list makes letters longer
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         system=system,

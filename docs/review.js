@@ -1,7 +1,7 @@
 // Document review: plans and calcs -> Claude -> senior audit -> QA gate -> reviewer edits -> letter.
 // Runs entirely in the browser. The API key is sent only to Anthropic.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm";
-import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792898150";
+import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792898864";
 
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);
@@ -118,7 +118,7 @@ function libraryBlocks() {
   return libs.filter((l) => l.on).map((l) => {
     const text = l.text.slice(0, Math.max(0, room));
     room -= text.length;
-    return text ? { type: "text", text: `The reviewer's master comment list "${l.name}" is below. It is the wording this office uses. When an issue you found matches a comment in it, use that wording, adjusted to the project (fill in the sheet, window, door or detail references, and drop placeholders such as ENTER TEXT or XXX). Do not add a comment just because it is in the list, and do not copy comments for conditions the documents do not show. Its section numbers may come from an older edition, so always cite the section numbers for the code basis above. Apply a jurisdiction-specific item only when the plans or the reviewer notes place the project in that jurisdiction.\n\n${text}` } : null;
+    return text ? { type: "text", text: `The reviewer's master comment list "${l.name}" is below. It is the wording this office uses. When an issue you found matches a comment in it, use that wording, adjusted to the project (fill in the sheet, window, door or detail references, and drop placeholders such as ENTER TEXT or XXX). Do not add a comment just because it is in the list, and do not copy comments for conditions the documents do not show. When a standard comment lists several sub-items, keep only the ones that apply and keep each comment under 400 characters; split it into separate comments when needed. Its section numbers may come from an older edition, so always cite the section numbers for the code basis above. Apply a jurisdiction-specific item only when the plans or the reviewer notes place the project in that jurisdiction.\n\n${text}` } : null;
   }).filter(Boolean);
 }
 
@@ -297,7 +297,7 @@ async function generate() {
 
     const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, timeout: 20 * 60 * 1000 });
     const msg = await streamReview(client, {
-      model: model.id, max_tokens: 64000, system,
+      model: model.id, max_tokens: 128000, system, // Sonnet and Opus 5.5 allow 128K output; a master list makes letters longer
       output_config: { effort: model.effort, format: { type: "json_schema", schema: recheck ? D.recheckSchema : D.docSchema } },
       messages: [{ role: "user", content }],
     }, progress);
