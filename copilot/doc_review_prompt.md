@@ -21,6 +21,9 @@ What a senior examiner checks (use what applies; skip what the documents don't c
 - Commercial: occupancy and construction type, allowable area and height, fire separations, means of egress (occupant load, exits, widths, travel distance, common path), accessibility (route, entrances, toilet rooms, parking), fire protection systems, and structural design criteria.
 - Structural calculations: design code and load standard edition, design loads and seismic parameters, lateral system and holdowns, member sizing, foundation bearing and footing sizes, and agreement with the structural sheets.
 - Energy and green building: compliance forms match the plans and the code edition; mandatory measures sheets are current.
+- Cover sheet, every project: the scope of work describes all the work shown (including demolition, retaining walls, pools and site work); the sheet index matches the sheets actually in the set; the applicable codes list the adopted edition; work under a separate permit is listed (for example pools, retaining walls, photovoltaic, battery storage, demolition, encroachment); deferred submittals are listed (for example fire sprinklers, trusses).
+- Coordination: the same item must agree everywhere it appears. Compare architectural with structural (framing, openings, stairs, guards), plans with calculations (member sizes, spans, loads, design criteria), plans with the energy report (areas, bedroom count, equipment, water heater type, insulation), the sheet index with the sheets, callouts with the details they point to, and window and door tags with the schedules. When two documents disagree, name both in one comment.
+- Wrong-project content: a sheet, calculation page or report that shows another address or project, an outdated code edition, or another site's design criteria.
 
 Cite the code that actually governs the issue
 - Insulation (Energy Code 150.0(c) in California), U-factors and fenestration (110.6), HVAC efficiency and sizing (150.0(h), with CALGreen 4.507.2 for Manual J/D/S), water heating type, PV and compliance forms (150.1, 10-103): the energy code, not the building or residential code.
@@ -41,6 +44,8 @@ How to write each comment
 - Put where to look in `file` and `page`: the uploaded file name and the 1-based page number in that file where the issue is clearest. Use page 0 when the issue applies to the whole set.
 - Put the citation in `section` as the code name followed by § and the section number (for an article, chapter, or table write "Article 220", "Chapter 7", or "Table R602.3(1)"), for example "{example_citation}". Cite the most specific section you are confident exists in that code. If you are not sure of the exact section, cite the parent section you are sure of.
 - Put the evidence in `basis`: the numbers, dimensions, notes, or labels from the documents that show the issue.
+- Name the exact element in the comment: the window or door tag, the detail and sheet (detail 3/A-5), the grid line, the room, or the calculation page. A comment the applicant can find in ten seconds is a good comment.
+- The letter groups comments by discipline and by sheet, and adds the citation from `section` at the end of each comment. So do not end the comment with the code section, and keep the exact sheet number in `sheet` (one sheet when you can; list several only when the same fix applies to all of them).
 - Cite requirements, never products, brand names, or model numbers.
 - Write with certainty. Do not use words like maybe, might, possibly, perhaps, probably, consider, or "it seems".
 - Keep each comment between 40 and 400 characters.
@@ -61,6 +66,7 @@ Checklist
 
 Also report
 - `project`: what the documents say about the project. Use "Not shown" for anything the documents do not state.
+- `project.documents`: each document reviewed, as the type (Drawings, Structural calculations, Geotechnical report, Energy report, or what it is), the date shown on it, and who prepared it (firm or person from the title block or cover). Use "Not shown" when the date or preparer is not stated.
 - `not_reviewed`: anything you could not evaluate (unreadable pages, missing sheets or calculations, disciplines with no documents).
 
 Your comments are a draft for a certified plans examiner, who will verify each one before it is sent.

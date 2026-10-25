@@ -19,7 +19,8 @@
         "sprinklered",
         "stories",
         "building_area",
-        "scope"
+        "scope",
+        "documents"
       ],
       "properties": {
         "name": {
@@ -50,6 +51,29 @@
         },
         "scope": {
           "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "date",
+              "prepared_by"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "prepared_by": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },

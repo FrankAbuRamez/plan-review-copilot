@@ -2,6 +2,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "review_round",
     "project",
     "recheck",
     "comments",
@@ -19,7 +20,8 @@
         "sprinklered",
         "stories",
         "building_area",
-        "scope"
+        "scope",
+        "documents"
       ],
       "properties": {
         "name": {
@@ -50,6 +52,29 @@
         },
         "scope": {
           "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "date",
+              "prepared_by"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "prepared_by": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },
@@ -60,6 +85,7 @@
         "additionalProperties": false,
         "required": [
           "number",
+          "group_header",
           "original",
           "status",
           "sheet",
@@ -72,7 +98,7 @@
         ],
         "properties": {
           "number": {
-            "type": "integer"
+            "type": "string"
           },
           "original": {
             "type": "string"
@@ -119,6 +145,9 @@
           },
           "page": {
             "type": "integer"
+          },
+          "group_header": {
+            "type": "string"
           }
         }
       }
@@ -189,6 +218,9 @@
       "items": {
         "type": "string"
       }
+    },
+    "review_round": {
+      "type": "integer"
     }
   }
 }

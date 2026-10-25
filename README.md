@@ -13,7 +13,8 @@ Built by an ICC-certified building plans examiner who leads a 20+ engineer plan 
 ## What it does
 
 - **New review.** Drop in plan sets and calculation PDFs, pick the code family (California, I-Codes or Florida) and disciplines. Dwellings and ADUs are reviewed under the residential code (CRC, IRC, FBC Residential), everything else under the building code. A pre-approved plan mode reviews only site-specific items and deviations from the approved set.
-- **Recheck.** Upload the resubmittal with the earlier letter. Each previous comment is marked Cleared, Partly cleared, Not cleared or Cannot verify, with a follow-up comment for anything still open, and it is designed to flag new unclouded changes.
+- **Letter in the examiner format.** Comments are numbered by discipline (A1, S1, T1...), grouped by sheet in plan-set order ("Sheet A-2, please address the following"), with the code section at the end, a documents-reviewed list, a building summary, and "No comments." for a clean discipline. Switch between the reviewer workspace and the letter as it will be sent.
+- **Recheck that carries the letter forward.** Upload the resubmittal with the earlier letter. Each previous comment is marked Cleared, Partly cleared, Not cleared or Cannot verify. Cleared comments drop off; open ones keep their original number and text with a PC2 note under them (PC3 on the next round, with the history kept), and new issues go under "Additional PC2 comments". When everything clears, it writes the no-further-comments letter. It is also designed to flag new unclouded changes.
 - **Code checklist.** A required pass over the mandatory items (for a dwelling: fire separation, safety glazing, escape openings, smoke and CO alarms, sprinklers, landings, attic access, address, exhaust), each marked Complies, Not shown, Noncompliant or N/A, so a miss is visible instead of silent.
 - **Every comment shows its sheet, code section, evidence and page.** Click the page chip to open the sheet.
 - **Reviewer workspace.** Edit any comment, take it out of the letter, or move it between the letter and the held list. Add the plan check number, reviewer and jurisdiction.
@@ -76,7 +77,8 @@ python -m copilot review plans.pdf --code "2025 California codes" --standard-pla
 python -m copilot recheck resubmittal.pdf --previous first_letter.md --code "2025 California codes"
 
 # Rules engine and tests (no API key needed)
-python -m unittest discover -s tests -t .          # 15 tests
+python -m unittest discover -s tests -t .          # Python tests
+node tests/letter.test.mjs                         # letter format and recheck carry-forward
 python -m copilot data/projects/p2_bistro.json      # print a correction letter
 python -m evals.run_eval --report evals/RESULTS.md  # score against the answer key
 

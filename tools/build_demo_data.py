@@ -32,4 +32,6 @@ import re, time  # noqa: E402
 index = ROOT / "docs" / "index.html"
 stamp = str(int(time.time()))
 index.write_text(re.sub(r"(data|engine|review)\.js\?v=\d+", lambda m: f"{m.group(1)}.js?v={stamp}", index.read_text(encoding="utf-8")), encoding="utf-8")
+review = ROOT / "docs" / "review.js"
+review.write_text(re.sub(r"letter\.js\?v=\d+", f"letter.js?v={stamp}", review.read_text(encoding="utf-8")), encoding="utf-8")
 print(f"wrote {out.relative_to(ROOT)} ({len(data['projects'])} projects), cache stamp {stamp}")

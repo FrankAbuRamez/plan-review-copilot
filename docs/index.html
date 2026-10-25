@@ -132,7 +132,12 @@ main{max-width:1320px;margin:0 auto;padding:16px}
 .lib textarea{width:100%;min-height:110px;margin-top:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 10px}
 .lib small{color:var(--muted)}
 .mini{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:650;cursor:pointer;justify-self:start}
-.rc{display:grid;grid-template-columns:34px 112px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.vt{display:flex;gap:6px;margin:-4px 0 14px}.vt button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer}
+.vt button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.sent{background:#fff;color:#111;border:1px solid var(--line);border-radius:8px;padding:22px 26px}
+.rc.done{opacity:.6}.rc .fu b{color:var(--brand)}
+@media print{.vt{display:none!important}.sent{border:0;padding:0}}
+.rc{display:grid;grid-template-columns:54px 112px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
 .rc .o{color:var(--muted);font-size:13px}.rc .e{font-size:12.5px;color:var(--muted);margin-top:4px}
 .rs{font-size:11px;font-weight:800;border-radius:6px;padding:3px 6px;text-align:center;align-self:start}
 .rs.Cleared{background:var(--ok-soft);color:var(--ok)}.rs.Partlycleared{background:var(--major-soft);color:var(--major)}
@@ -330,7 +335,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
       <div class="panel"><div class="ph">Letter details</div><div class="pb form"><label>Plan check / permit number<input id="pc" placeholder="e.g. B25-0142"></label><label>Reviewer<input id="rv" placeholder="Name, certification"></label><label>Jurisdiction<input id="jx" placeholder="City or county"></label></div></div>
       <div class="panel"><div class="ph">Actions</div><div class="pb actions">
         <button id="copy">Copy letter</button><button id="word">Download Word</button><button id="print">Print / save PDF</button><button id="json">Download JSON</button><button id="clear">Clear review</button>
-        <label class="inline" style="width:100%;margin-top:6px"><input type="checkbox" id="group" checked> Group comments by discipline</label>
       </div></div>
       <div class="panel" id="ck-panel"><div class="ph">Code checklist <small id="cksum"></small></div><div class="pb"><ul class="ck" id="ck"></ul></div></div>
       <div class="panel"><div class="ph">Held for human review</div><div class="pb"><ul class="held" id="held"></ul></div></div>
@@ -395,8 +399,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
 <footer class="foot"><span>A learning project by a certified plans examiner: how AI review can be made safe enough for code-compliance work. Every comment is a draft for a reviewer to verify.</span><a href="https://github.com/FrankAbuRamez/plan-review-copilot" target="_blank" rel="noopener">Source on GitHub</a></footer>
 <div class="modal" id="modal" hidden><div class="modal-in"><div class="modal-h"><b id="modal-t"></b><button id="modal-x" title="Close">✕</button></div><div class="modal-b" id="modal-b"></div></div></div>
 
-<script src="data.js?v=1792856299"></script>
-<script src="engine.js?v=1792856299"></script>
+<script src="data.js?v=1792895473"></script>
+<script src="engine.js?v=1792895473"></script>
 <script>
 (function(){
   const D = window.PRC_DATA, E = PRC.make(D);
@@ -451,6 +455,6 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05
   gateNow();
 })();
 </script>
-<script type="module" src="review.js?v=1792856299"></script>
+<script type="module" src="review.js?v=1792895473"></script>
 </body>
 </html>

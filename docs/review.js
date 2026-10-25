@@ -1,6 +1,7 @@
 // Document review: plans and calcs -> Claude -> senior audit -> QA gate -> reviewer edits -> letter.
 // Runs entirely in the browser. The API key is sent only to Anthropic.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm";
+import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792895473";
 
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);
@@ -12,7 +13,6 @@ const MODELS = {
 };
 const LIMIT = 32 * 1024 * 1024 * 0.95; // request limit, measured after base64 encoding
 const DISC = ["Building", "Fire and Life Safety", "Accessibility", "Structural", "Mechanical", "Electrical", "Plumbing", "Energy", "Green Building"];
-const DISC_ORDER = ["General", "Building", "Fire and Life Safety", "Accessibility", "Structural", "Site and Civil", "Mechanical", "Plumbing", "Electrical", "Energy", "Green Building"];
 const SEV = ["Critical", "Major", "Minor"];
 const FINAL_SCHEMA = { type: "object", additionalProperties: false, required: ["verdicts"], properties: { verdicts: { type: "array", items: {
   type: "object", additionalProperties: false, required: ["id", "verdict", "severity", "section", "comment", "reason"],
@@ -26,6 +26,8 @@ Use Critical only for a deficiency the documents show that affects life safety o
 let files = [];
 let running = false;
 let mode = "new"; // "new" or "recheck"
+let view = "work"; // "work" (reviewer workspace) or "letter" (the letter as it will be sent)
+document.head.insertAdjacentHTML("beforeend", `<style>${LETTER_CSS}</style>`);
 // Current review shown on screen; also saved so a refresh doesn't lose it.
 let state = null; // { raw, code, modelKey, when, usage, log, items: [{...finding, status, include, problems}] }
 
@@ -54,7 +56,7 @@ function setMode(m) {
   refresh();
 }
 document.querySelectorAll(".mode").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
-$("#use-last").onclick = () => { if (state && state.mode !== "recheck") { $("#prev").value = plainLetter(); refresh(); } else { $("#prev").placeholder = "No earlier review saved in this browser. Paste the letter instead."; } };
+$("#use-last").onclick = () => { if (state) { $("#prev").value = plainLetter(); refresh(); } else { $("#prev").placeholder = "No earlier review saved in this browser. Paste the letter instead."; } };
 $("#prev").addEventListener("input", refresh);
 const libCount = () => { const n = $("#lib").value.split(/\n/).filter((l) => l.trim().length > 15).length; $("#lib-count").textContent = n ? `${n} standard comments saved` : ""; };
 $("#lib").value = store.get("prc_lib") || ""; libCount();
@@ -285,12 +287,15 @@ async function generate() {
         section: x.section, comment: x.follow_up, evidence: x.evidence, notes: [] }, false) : [];
       return { ...x, include: !!open, problems: probs };
     }) : null;
+    const pasted = $("#prev").value.trim();
     state = {
-      mode: recheck ? "recheck" : "new", recheck: rc,
+      mode: recheck ? "recheck" : "new", recheck: rc, disciplines, fileOrder: files.map((f) => f.name),
+      round: recheck ? (pasted ? roundFrom(pasted) : Math.max(2, raw.review_round || 2)) : 1,
       raw, code, modelKey, usage, when: new Date().toISOString(), log: r.log,
       items: r.accepted.map((f) => f.drop ? { ...f, status: "held", include: false, problems: [f.final] } : { ...f, status: "letter", include: true, problems: [] })
         .concat(r.rejected.map((x) => ({ ...x.finding, status: "held", include: false, problems: x.finding.final ? [x.finding.final, ...x.problems] : x.problems }))),
     };
+    view = "work";
     save();
     render();
     $("#out").scrollIntoView({ behavior: "smooth" });
@@ -312,26 +317,27 @@ $("#go").onclick = generate;
 function save() { if (state) store.set("prc_last", JSON.stringify(state)); }
 const meta = () => ({ pc: $("#pc").value.trim(), rv: $("#rv").value.trim(), jx: $("#jx").value.trim() });
 ["#pc", "#rv", "#jx"].forEach((s) => $(s).addEventListener("input", () => { if (state) { state.meta = meta(); save(); render(); } }));
-const order = (a, b) => (DISC_ORDER.indexOf(a.discipline) + 1 || 99) - (DISC_ORDER.indexOf(b.discipline) + 1 || 99)
-  || SEV.indexOf(a.severity) - SEV.indexOf(b.severity);
+const discSection = (d) => (SECTIONS.find(([, , list]) => list.includes(d)) || SECTIONS[0]);
 
+// Letter items in letter order (plan-set order within each discipline), including ones switched off.
 function letterItems() {
-  const items = state.items.filter((i) => i.status === "letter");
-  return $("#group").checked ? [...items].sort(order) : items;
+  return sortItems(state.items.map((f, ref) => ({ f, ref, discipline: f.discipline, sheet: f.sheet, file: f.file, page: f.page }))
+    .filter((x) => x.f.status === "letter"), state.fileOrder || []);
 }
 
 function render() {
   if (!state) return;
   const p = state.raw.project || {};
   const when = new Date(state.when).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  const items = letterItems();
-  let n = 0, lastDisc = "";
-  const cards = items.map((f) => {
-    const idx = state.items.indexOf(f);
-    const head = $("#group").checked && f.discipline !== lastDisc ? `<div class="dh">${esc(f.discipline)}</div>` : "";
-    lastDisc = f.discipline;
-    const num = f.include ? ++n : "–";
-    return `${head}<div class="cm ${f.include ? "" : "off"}" data-i="${idx}"><div class="i">${num}</div><div>
+  const L = buildLetter(state);
+  const pc = L.pc;
+  let lastSec = "";
+  const cards = letterItems().map(({ f, ref: idx }) => {
+    const sec = discSection(f.discipline);
+    const head = sec[0] !== lastSec ? `<div class="dh">${esc(sec[1])}${state.recheck ? ` · additional ${pc} comments` : ""}</div>` : "";
+    lastSec = sec[0];
+    const num = f.include ? (L.labels.get(idx) || "") : "–";
+    return `${head}<div class="cm ${f.include ? "" : "off"}" data-i="${idx}"><div class="i">${esc(num)}</div><div>
       <div class="chips"><span class="chip ${f.severity}">${f.severity}</span><span class="chip plain">${esc(f.discipline)}</span>
       <span class="chip plain">Sheet ${esc(f.sheet)}</span><span class="chip plain">${esc(f.section)}</span>
       ${f.notes.includes("VERIFY_CITATION") ? '<span class="chip verify" title="Not in the section index; confirm the section exists and applies">verify citation</span>' : ""}
@@ -344,19 +350,20 @@ function render() {
   }).join("");
   const u = state.usage;
   const m = state.meta || {};
-  const inc = items.filter((i) => i.include);
+  const inc = state.items.filter((i) => i.status === "letter" && i.include);
   const sum = SEV.map((s) => [s, inc.filter((i) => i.severity === s).length]).filter(([, c]) => c)
     .map(([s, c]) => `<span class="${s}">${c} ${s}</span>`).join("");
   const details = [m.jx, m.pc && `Plan check ${m.pc}`, m.rv && `Reviewer ${m.rv}`].filter(Boolean).map(esc).join(" · ");
-  const rcHtml = state.recheck ? `<div class="dh">Previous comments</div>` + state.recheck.map((x, k) => `<div class="rc"><div class="i">${x.number}</div>
+  const rcHtml = state.recheck ? `<div class="dh">Comments from the previous letter</div>` + state.recheck.map((x, k) => `<div class="rc ${x.status === "Cleared" ? "done" : ""}"><div class="i">${esc(x.number)}</div>
       <span class="rs ${x.status.replace(/[^A-Za-z]/g, "")}">${esc(x.status)}</span><div><div class="o">${esc(x.original)}</div>
       <div class="e">Sheet ${esc(x.sheet)} · ${esc(x.evidence)}</div>
-      ${x.follow_up ? `<div class="fu" data-rcedit="${k}">${esc(x.follow_up)}</div>${x.problems.length ? `<small style="color:var(--held)">${esc(x.problems.join("; "))}</small>` : ""}
+      ${x.status !== "Cleared" ? `<div class="fu"><b>${pc}:</b> <span data-rcedit="${k}">${esc(x.follow_up || "Comment not addressed. Comment remains.")}</span></div>${x.problems.length ? `<small style="color:var(--held)">${esc(x.problems.join("; "))}</small>` : ""}
       <div class="tools"><label><input type="checkbox" data-rcinc="${k}" ${x.include ? "checked" : ""}> In letter</label><button data-rced="${k}">Edit</button>
-      ${x.page > 0 ? `<button data-rcpg="${k}">📄 p.${x.page}</button>` : ""}</div>` : ""}</div></div>`).join("") + `<div class="dh">New comments</div>` : "";
+      ${x.page > 0 ? `<button data-rcpg="${k}">📄 p.${x.page}</button>` : ""}</div>` : ""}</div></div>`).join("") : "";
   const rcSum = state.recheck ? ["Cleared", "Partly cleared", "Not cleared", "Cannot verify"].map((s) => [s, state.recheck.filter((x) => x.status === s).length])
     .filter(([, c]) => c).map(([s, c]) => `<span class="rs ${s.replace(/[^A-Za-z]/g, "")}">${c} ${s}</span>`).join("") : "";
-  $("#letter").innerHTML = `<div class="lh"><div><h3>Plan Review Corrections${state.recheck ? " · Recheck" : ""}</h3><div>${esc(p.name && p.name !== "Not shown" ? p.name : "Project name not shown on the plans")}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
+  const tabs = `<div class="vt"><button data-view="work" class="${view === "work" ? "on" : ""}">Review workspace</button><button data-view="letter" class="${view === "letter" ? "on" : ""}">Letter as sent</button></div>`;
+  const work = `<div class="lh"><div><h3>Plan Review Comments · ${esc(L.roundWord)}</h3><div>${esc(p.name && p.name !== "Not shown" ? p.name : "Project name not shown on the plans")}</div>${details ? `<div class="lhd">${details}</div>` : ""}</div>
       <div class="m">${when}<br>${esc(p.governing_code || state.code)}</div></div>
     <div class="proj">
       <div><b>Occupancy</b>${esc(p.occupancy)}</div><div><b>Construction</b>${esc(p.construction_type)}</div><div><b>Sprinklered</b>${esc(p.sprinklered)}</div>
@@ -364,8 +371,9 @@ function render() {
     </div>
     <div class="sum">${rcSum}${sum}<span class="plain">${inc.length} ${state.recheck ? "new " : ""}comments</span></div>
     ${rcHtml}
-    ${cards || '<div class="clean">No comments in the letter. See "Held for human review".</div>'}
-    ${u ? `<div class="meta">${MODELS[state.modelKey]?.id || ""} · ${u.secs}s · ${Math.round(u.inTok / 1000)}k tokens in, ${Math.round(u.outTok / 1000)}k out · about $${u.cost.toFixed(2)}</div>` : ""}`;
+    ${cards || (state.recheck ? "" : '<div class="clean">No comments in the letter. See "Held for human review".</div>')}`;
+  $("#letter").innerHTML = tabs + (view === "letter" ? `<div class="sent">${letterHtml(L, esc)}</div>` : work)
+    + (u ? `<div class="meta">${MODELS[state.modelKey]?.id || ""} · ${u.secs}s · ${Math.round(u.inTok / 1000)}k tokens in, ${Math.round(u.outTok / 1000)}k out · about $${u.cost.toFixed(2)}</div>` : "");
 
   const held = state.items.filter((i) => i.status === "held");
   $("#held").innerHTML = held.length ? held.map((f) => {
@@ -390,6 +398,7 @@ function render() {
 }
 
 function wire() {
+  document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => { view = b.dataset.view; render(); }));
   document.querySelectorAll("[data-rcinc]").forEach((c) => (c.onchange = () => { state.recheck[+c.dataset.rcinc].include = c.checked; save(); render(); }));
   document.querySelectorAll("[data-rcpg]").forEach((b) => (b.onclick = () => showPage(state.recheck[+b.dataset.rcpg])));
   document.querySelectorAll("[data-rced]").forEach((b) => (b.onclick = () => {
@@ -408,7 +417,6 @@ function wire() {
     } else { el.contentEditable = "true"; el.focus(); b.textContent = "Save"; }
   }));
 }
-$("#group").onchange = render;
 
 // ---------- page viewer ----------
 let pdfjs = null;
@@ -450,38 +458,9 @@ $("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").hidden =
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").hidden = true; });
 
 // ---------- export ----------
-function plainLetter() {
-  const p = state.raw.project || {};
-  const m = state.meta || {};
-  const lines = ["PLAN REVIEW CORRECTIONS", p.name || "", m.jx || "", m.pc ? `Plan check ${m.pc}` : "", m.rv ? `Reviewer ${m.rv}` : "",
-    `${p.governing_code || state.code}`, new Date(state.when).toLocaleDateString(), ""].filter((x, i) => x || i === 7);
-  if (state.recheck) {
-    lines.push("PREVIOUS COMMENTS NOT CLEARED");
-    for (const x of state.recheck.filter((r) => r.include)) lines.push(`${x.number}. [${x.status}] Sheet ${x.sheet}`, `   ${x.follow_up}`);
-    lines.push("", "NEW COMMENTS");
-  }
-  let n = 0, last = "";
-  for (const f of letterItems().filter((i) => i.include)) {
-    if ($("#group").checked && f.discipline !== last) { lines.push("", f.discipline.toUpperCase()); last = f.discipline; }
-    lines.push(`${++n}. [${f.severity}] Sheet ${f.sheet} · ${f.section}`, `   ${f.comment}`);
-  }
-  return lines.join("\n");
-}
+const plainLetter = () => letterText(buildLetter(state));
 function wordLetter() {
-  const p = state.raw.project || {};
-  let n = 0, last = "", body = "";
-  if (state.recheck) {
-    body += "<h3>Previous comments not cleared</h3>";
-    for (const x of state.recheck.filter((r) => r.include)) body += `<p><b>${x.number}. Sheet ${esc(x.sheet)}</b> <i>(${esc(x.status)})</i><br>${esc(x.follow_up)}</p>`;
-    body += "<h3>New comments</h3>";
-  }
-  for (const f of letterItems().filter((i) => i.include)) {
-    if ($("#group").checked && f.discipline !== last) { body += `<h3>${esc(f.discipline)}</h3>`; last = f.discipline; }
-    body += `<p><b>${++n}. Sheet ${esc(f.sheet)} · ${esc(f.section)}</b> <i>(${f.severity})</i><br>${esc(f.comment)}</p>`;
-  }
-  return `<html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}h1{font-size:16pt}h3{font-size:12pt;margin-top:14pt;border-bottom:1px solid #999}</style></head>
-    <body><h1>Plan Review Corrections</h1><p><b>${esc(p.name)}</b><br>${[state.meta?.jx, state.meta?.pc && `Plan check ${state.meta.pc}`, state.meta?.rv && `Reviewer ${state.meta.rv}`].filter(Boolean).map(esc).join("<br>")}${state.meta?.jx || state.meta?.pc || state.meta?.rv ? "<br>" : ""}${esc(p.governing_code || state.code)}<br>${new Date(state.when).toLocaleDateString()}</p>
-    <p>Occupancy ${esc(p.occupancy)} · Construction ${esc(p.construction_type)} · Sprinklered ${esc(p.sprinklered)} · ${esc(p.stories)} story · ${esc(p.building_area)}</p>${body}</body></html>`;
+  return `<html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}${LETTER_CSS}</style></head><body>${letterHtml(buildLetter(state), esc)}</body></html>`;
 }
 function download(name, type, data) {
   const a = document.createElement("a");
@@ -494,7 +473,7 @@ $("#copy").onclick = async () => {
   try { await navigator.clipboard.writeText(plainLetter()); $("#copy").textContent = "Copied ✓"; setTimeout(() => ($("#copy").textContent = "Copy letter"), 1500); } catch (e) { /* clipboard blocked */ }
 };
 $("#word").onclick = () => download(fileBase() + "_corrections.doc", "application/msword", wordLetter());
-$("#print").onclick = () => window.print();
+$("#print").onclick = () => { if (view !== "letter") { view = "letter"; render(); } window.print(); };
 $("#json").onclick = () => download(fileBase() + "_review.json", "application/json", JSON.stringify(state, null, 2));
 $("#clear").onclick = () => { store.del("prc_last"); state = null; $("#out").hidden = true; $("#stages").hidden = true; };
 
