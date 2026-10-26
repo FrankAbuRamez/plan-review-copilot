@@ -1,7 +1,7 @@
 // Document review: plans and calcs -> Claude -> senior audit -> QA gate -> reviewer edits -> letter.
 // Runs entirely in the browser. The API key is sent only to Anthropic.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm";
-import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1792899508";
+import { buildLetter, letterHtml, letterText, sortItems, roundFrom, SECTIONS, LETTER_CSS } from "./letter.js?v=1793051296";
 
 const D = window.PRC_DATA, E = window.PRC.make(D);
 const $ = (s) => document.querySelector(s);
@@ -178,7 +178,7 @@ async function detailTiles(pdfFiles, budgetBytes, note) {
   const lib = await loadPdfJs();
   const pages = [];
   for (const f of pdfFiles) {
-    const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+    const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise;
     for (let n = 1; n <= doc.numPages; n++) {
       const page = await doc.getPage(n);
       const words = (await page.getTextContent()).items.length;
@@ -507,7 +507,7 @@ async function showPage(f) {
   $("#modal-b").innerHTML = '<p style="padding:20px">Loading page…</p>';
   try {
     const lib = await loadPdfJs();
-    if (!docCache.has(file)) docCache.set(file, lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise);
+    if (!docCache.has(file)) docCache.set(file, lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise);
     const doc = await docCache.get(file);
     const page = await doc.getPage(Math.min(Math.max(1, f.page), doc.numPages));
     const v1 = page.getViewport({ scale: 1 });
